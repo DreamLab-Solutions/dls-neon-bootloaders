@@ -9,6 +9,8 @@ import socket
 import subprocess
 import time
 
+from PIL import Image
+
 ROOT = Path(__file__).resolve().parents[1]
 RESOLUTIONS = {"720p": "1280x720", "1080p": "1920x1080", "1440p": "2560x1440", "4k": "3840x2160"}
 
@@ -27,12 +29,15 @@ def make_iso(profile, resolution):
     shutil.copytree(ROOT / "build/theme", boot / "themes/dls-neon", dirs_exist_ok=True)
     fonts = "\n".join(f"loadfont ($root)/boot/grub/themes/dls-neon/{p.name}"
                       for p in sorted((ROOT / "build/theme").glob("*.pf2")))
-    config = f'''insmod all_video
+    config = f'''serial --unit=0 --speed=115200
+terminal_output console serial
+insmod all_video
 insmod gfxterm
 insmod gfxmenu
 insmod png
 set gfxmode={resolution}
 {fonts}
+set gfxterm_font="DejaVu Sans Mono Regular 14"
 terminal_output gfxterm
 set theme=($root)/boot/grub/themes/dls-neon/theme-{profile}.txt
 export theme
@@ -91,6 +96,25 @@ class QMP:
         self.sock.close()
 
 
+def wait_for_theme(monitor, proc, destination, resolution, seconds=90):
+    """Wait for actual theme pixels, not a fixed delay or firmware splash."""
+    expected = tuple(map(int, resolution.split("x")))
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        if proc.poll() is not None:
+            raise RuntimeError("QEMU stopped before GRUB rendered")
+        monitor.screenshot(destination)
+        with Image.open(destination) as screen:
+            if screen.size == expected:
+                w, h = screen.size
+                region = screen.convert("RGB").crop((int(w*.05), int(h*.27), int(w*.48), int(h*.7)))
+                colors = dict((color, count) for count, color in region.getcolors(region.width*region.height))
+                if colors.get((217, 255, 0), 0) > 100:
+                    return
+        time.sleep(1)
+    raise RuntimeError(f"No verified GRUB theme at {resolution}; inspect {destination}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile", choices=RESOLUTIONS, default="1080p")
@@ -108,7 +132,8 @@ def main():
     qemu = os.environ.get("QEMU", "qemu-system-x86_64")
     qmp = dest / "qmp.sock"
     qmp.unlink(missing_ok=True)
-    command = [qemu, "-machine", "q35", "-accel", "tcg", "-m", "256", "-vga", "std",
+    command = [qemu, "-machine", "q35", "-accel", "tcg", "-m", "256", "-vga", "none",
+               "-device", "VGA,vgamem_mb=64", "-serial", f"file:{dest / 'serial.log'}",
                "-cdrom", str(iso), "-boot", "d", "-nic", "none",
                "-no-reboot", "-qmp", f"unix:{qmp},server=on,wait=off"]
     if "CODE" in firmware.name:
@@ -142,8 +167,7 @@ def main():
                     break
                 time.sleep(0.1)
             monitor = QMP(qmp)
-            time.sleep(18)
-            monitor.screenshot(dest / "01-menu.png")
+            wait_for_theme(monitor, proc, dest / "01-menu.png", args.resolution or RESOLUTIONS[args.profile])
             monitor.key("down")
             monitor.screenshot(dest / "02-selected.png")
             monitor.key("ret")
@@ -156,6 +180,9 @@ def main():
             monitor.key("ret")
             monitor.key("end")
             monitor.screenshot(dest / "05-scrolling.png")
+            snapshots = [p.read_bytes() for p in sorted(dest.glob("0[1-5]-*.png"))]
+            if len(set(snapshots)) != 5:
+                raise RuntimeError("Keyboard navigation did not produce five distinct GRUB screens")
             monitor.command("quit")
             proc.wait(timeout=10)
         finally:

@@ -9,7 +9,9 @@ jobs:
       - uses: actions/checkout@v4
       - run: sudo apt-get update && sudo apt-get install -y python3-pil grub-common grub-efi-amd64-bin grub2-common xorriso mtools qemu-system-x86 ovmf
       - run: make package
-      - run: python3 scripts/preview.py --headless --profile 1080p
+      - run: |
+          python3 scripts/preview.py --headless --profile 1080p
+          python3 scripts/preview.py --headless --profile 720p
       - uses: actions/upload-artifact@v4
         with:
           name: dls-neon-private-preview

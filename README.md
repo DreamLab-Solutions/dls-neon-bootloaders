@@ -4,7 +4,10 @@ Tema GNU GRUB ispirato al concept DreamLab: portale spaziale, teal, viola e
 giallo **#D9FF00**. Il menu è nativo e navigabile da tastiera; le voci reali
 rimangono quelle generate dalla distribuzione. Versione **0.1.0 — anteprima privata**.
 
-![Concept approvato](assets/reference/approved-concept.png)
+![Tema reale eseguito in GNU GRUB UEFI a 1080p](docs/screenshots/grub-1080p.png)
+
+Lo screenshot proviene dalla VM di prova. Il concept originale resta conservato
+in `assets/reference/approved-concept.png` nel repository.
 
 ## Provarlo su Ubuntu
 
