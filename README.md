@@ -2,7 +2,7 @@
 
 Tema GNU GRUB ispirato al concept DreamLab: portale spaziale, teal, viola e
 giallo **#D9FF00**. Il menu è nativo e navigabile da tastiera; le voci reali
-rimangono quelle generate dalla distribuzione. Versione **0.1.0 — anteprima privata**.
+rimangono quelle generate dalla distribuzione. Versione **0.1.1 — anteprima privata**.
 
 ![Tema reale eseguito in GNU GRUB UEFI a 1080p](docs/screenshots/grub-1080p.png)
 
@@ -15,7 +15,7 @@ Il pacchetto `.deb` copia soltanto i file in `/usr`: **non modifica l'avvio**.
 L'attivazione è un comando separato, crea un backup e non riavvia il computer.
 
 ```sh
-sudo apt install ./dist/dls-neon-grub_0.1.0_all.deb
+sudo apt install ./dist/dls-neon-grub_0.1.1_all.deb
 dls-neon-theme install --dry-run
 sudo dls-neon-theme install --profile 1080p --timeout 8
 ```
@@ -23,6 +23,12 @@ sudo dls-neon-theme install --profile 1080p --timeout 8
 Il controllo finale rifiuta modifiche inattese alle voci di boot. Se la generazione
 fallisce, la configurazione attiva resta quella precedente. L'installer non usa
 `grub-install`, non scrive nella partizione EFI e non modifica l'ordine UEFI.
+
+Dalla 0.1.1 il controllo tollera il cambio del nome del dispositivo nell'etichetta
+EFI generata, per esempio da `nvme0n1p1` a `nvme1n1p1`, soltanto se identificatore,
+ricerca della partizione tramite UUID e loader EFI restano gli stessi. Numero e
+ordine delle voci continuano a essere verificati. Se l'attivazione si interrompe,
+il backup conserva anche la configurazione candidata e un confronto leggibile.
 
 Il profilo 1080p è il punto di partenza per il laptop. Altri profili: `720p`, `1440p`,
 `4k`. La risoluzione disponibile durante l'avvio dipende dal firmware, non dal
@@ -32,8 +38,8 @@ Il profilo tipografico resta quello scelto: per schermi piccoli usare `720p`.
 Per usare l'archivio portabile senza installare un pacchetto:
 
 ```sh
-tar -xzf dist/dls-neon-grub-0.1.0.tar.gz
-cd dls-neon-grub-0.1.0
+tar -xzf dist/dls-neon-grub-0.1.1.tar.gz
+cd dls-neon-grub-0.1.1
 ./install.sh --dry-run
 sudo ./install.sh --profile 1080p --timeout 8
 ```

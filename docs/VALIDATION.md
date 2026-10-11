@@ -30,10 +30,19 @@ Il timer della demo è 120 secondi; l'attivazione sul laptop propone 8 secondi.
 
 ## Da completare sul laptop
 
-Il `.deb` non è stato installato e il tema non è stato attivato nel GRUB del
-laptop: `sudo` richiede autenticazione interattiva dell'utente. Nessuna modifica
-a /boot, /etc/default/grub, EFI o NVRAM è stata applicata. Il file grub.cfg attivo
-richiede privilegi per la lettura e non è stato acquisito senza autenticazione.
+L'utente ha installato il `.deb` 0.1.0 e provato l'attivazione. Il tentativo si è
+interrotto prima di sostituire grub.cfg per il cambiamento del nome del dispositivo
+nell'etichetta Windows. È stata verificata la rimozione del drop-in e del tema
+temporaneo; grub.cfg conserva la data antecedente al tentativo. L'utente ha fornito
+le intestazioni del menu originale. L'UUID della partizione EFI Windows coincide
+con quello del disco oggi rinumerato. Il contenuto completo del file protetto e
+la configurazione candidata del tentativo iniziale non sono stati acquisiti.
+
+La 0.1.1 include 26 test superati, con casi specifici per cambio nome del disco,
+UUID e loader differenti, comandi EFI modificati, voci rimosse/riordinate,
+intestazioni con variabili tra parentesi graffe e installazione/ripristino dopo
+rinumerazione. Entrambi i pacchetti sono rigenerati; l'aggiornamento e un nuovo
+tentativo sul laptop richiedono ancora l'autenticazione sudo dell'utente.
 
 Restano da verificare l'effettiva modalità video del firmware, il caricamento
 di Ubuntu con Secure Boot nelle impostazioni reali, il ritorno al desktop e il

@@ -84,6 +84,12 @@ class Transactions(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Boot entries changed"):
             self.install()
         self.assertEqual(self.cfg.read_text(), self.before)
+        backup = next((self.root / m.STATE / "backups").iterdir())
+        self.assertIn("'Changed'", (backup / "candidate-grub.cfg").read_text())
+        self.assertIn("-menuentry 'Ubuntu'", (backup / "boot-entry-changes.diff").read_text())
+        record = json.loads((backup / "transaction.json").read_text())
+        self.assertEqual(record["status"], "aborted")
+        self.assertTrue(record["config_unchanged"])
 
     def test_missing_theme_aborts(self):
         self.fail = "theme"

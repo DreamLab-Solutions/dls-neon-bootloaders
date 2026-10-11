@@ -3,12 +3,14 @@
 import argparse
 from contextlib import contextmanager
 from datetime import datetime, timezone
+import difflib
 import fcntl
 import hashlib
 import json
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -52,7 +54,83 @@ def atomic_copy(source, destination):
 
 
 def boot_entries(text):
-    return re.findall(r"^\s*(?:menuentry|submenu)\s+(.+?)(?:\s*\{|$)", text, re.MULTILINE)
+    return re.findall(r"^[ \t]*(?:menuentry|submenu)[ \t]+(.+?)[ \t]+\{[ \t]*$", text, re.MULTILINE)
+
+
+def entry_headers(text):
+    return re.findall(r"^[ \t]*(menuentry|submenu)[ \t]+(.+?)[ \t]+\{[ \t]*$", text, re.MULTILINE)
+
+
+def efi_id(tokens):
+    """Only distro-generated EFI entries with a filesystem UUID qualify."""
+    for index, token in enumerate(tokens[:-1]):
+        if token in ("$menuentry_id_option", "${menuentry_id_option}", "--id"):
+            value = tokens[index + 1]
+            if re.fullmatch(r"osprober-efi-[0-9A-Fa-f]+(?:-[0-9A-Fa-f]+)+", value):
+                return value
+    return None
+
+
+def efi_body(text, header, identity):
+    """Compare EFI commands, allowing only device hints resolved by the same UUID.
+
+    Deliberately limited to the standalone stanza format emitted by 30_os-prober.
+    Unknown/custom formats fail closed instead of evaluating GRUB shell code.
+    """
+    pattern = (r"^[ \t]*menuentry[ \t]+" + re.escape(header)
+               + r"[ \t]+\{[ \t]*\n(.*?)^[ \t]*\}[ \t]*$")
+    bodies = re.findall(pattern, text, re.MULTILINE | re.DOTALL)
+    if len(bodies) != 1:
+        return None
+    uuid = identity.removeprefix("osprober-efi-")
+    normalized, searches, loaders = [], 0, 0
+    for line in bodies[0].splitlines():
+        tokens = shlex.split(line, comments=True)
+        if not tokens:
+            continue
+        if len(tokens) == 2 and tokens[0] == "set" and re.fullmatch(r"root=hd\d+,(?:gpt|msdos)\d+", tokens[1]):
+            # 30_os-prober follows this fallback with a filesystem UUID search.
+            normalized.append(("set", "root=<device-hint>"))
+        elif tokens[0] == "search":
+            if "--fs-uuid" not in tokens or "--set=root" not in tokens or tokens[-1] != uuid:
+                return None
+            searches += 1
+            normalized.append(tuple(t for t in tokens if not t.startswith("--hint-")))
+        else:
+            if tokens[0] == "chainloader":
+                loaders += 1
+                if len(tokens) != 2 or not tokens[1].startswith("/"):
+                    return None
+            normalized.append(tuple(tokens))
+    return normalized if searches and loaders == 1 else None
+
+
+def compatible_boot_entries(before, after):
+    """Keep order, hierarchy markers, IDs and EFI targets; tolerate device labels."""
+    original, candidate = entry_headers(before), entry_headers(after)
+    if not original or len(original) != len(candidate):
+        return False
+    try:
+        for (old_kind, old_header), (new_kind, new_header) in zip(original, candidate):
+            if old_kind != new_kind:
+                return False
+            old, new = shlex.split(old_header), shlex.split(new_header)
+            identity = efi_id(old)
+            if old_kind == "menuentry" and identity:
+                if efi_id(new) != identity or old[1:] != new[1:]:
+                    return False
+                # Only the generated '(on /dev/...)' suffix may change.
+                label = r" \(on /dev/[A-Za-z0-9_./-]+\)$"
+                if re.sub(label, "", old[0]) != re.sub(label, "", new[0]):
+                    return False
+                old_body = efi_body(before, old_header, identity)
+                if old_body is None or old_body != efi_body(after, new_header, identity):
+                    return False
+            elif old_header != new_header:
+                return False
+        return True
+    except ValueError:
+        return False
 
 
 class Manager:
@@ -131,8 +209,15 @@ class Manager:
                 text = staged.read_text()
                 if f"/{theme_rel}/theme-{profile}.txt" not in text or "insmod gfxmenu" not in text:
                     raise RuntimeError("Generated configuration did not activate the theme")
-                if boot_entries(text) != boot_entries((backup / "grub.cfg").read_text()):
-                    raise RuntimeError("Boot entries changed during generation; review before activation")
+                if not compatible_boot_entries((backup / "grub.cfg").read_text(), text):
+                    shutil.copy2(staged, backup / "candidate-grub.cfg")
+                    differences = "\n".join(difflib.unified_diff(
+                        (backup / "grub.cfg").read_text().splitlines(), text.splitlines(),
+                        fromfile="active grub.cfg", tofile="generated grub.cfg", lineterm=""))
+                    (backup / "boot-entry-changes.diff").write_text(differences + "\n")
+                    raise RuntimeError(
+                        "Boot entries changed during generation; active configuration kept intact.\n"
+                        f"{differences}\nReview saved candidate: {backup / 'candidate-grub.cfg'}")
                 if digest(cfg) != record["config_before"]:
                     raise RuntimeError("GRUB configuration changed concurrently; preserving it")
                 # Preserve access mode, then publish only the validated configuration.
@@ -142,12 +227,14 @@ class Manager:
                 active.write_text(json.dumps(record, indent=2) + "\n")
                 os.replace(staged, cfg)
                 return record
-            except BaseException:
+            except BaseException as error:
                 # The live config is replaced only at the end, so generation errors keep it intact.
                 dropin.unlink(missing_ok=True)
                 if target.exists():
                     shutil.rmtree(target)
                 active.unlink(missing_ok=True)
+                record.update(status="aborted", error=str(error), config_unchanged=digest(cfg) == record["config_before"])
+                (backup / "transaction.json").write_text(json.dumps(record, indent=2) + "\n")
                 raise
             finally:
                 if staged:
