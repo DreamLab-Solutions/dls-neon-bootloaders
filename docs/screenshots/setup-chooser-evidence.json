@@ -1,0 +1,9 @@
+{
+  "scope": "actual packaged Tk chooser in isolated Debian/Xvfb; target detected from the real standard os-release symlink; both previews switched; application disabled before reviewed plan; no privilege request or host boot write",
+  "runtime_sha256": "68d295d7cecdde0b372f681b92b94311fd53d73d5471e6b3c8429b8e2e6d5bea",
+  "screenshots": {
+    "setup-chooser-grub.png": "84b3e294be447ca9a747af33c81ef58768ef7a6ce578058402d82ba18780c7bc",
+    "setup-chooser-limine.png": "b27814b0e213d7cd23bfc4fb230410dfa3a18cf877426159bde9863f4259dc4a"
+  },
+  "tests_passed": 92
+}

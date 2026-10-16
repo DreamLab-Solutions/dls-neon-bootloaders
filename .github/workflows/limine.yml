@@ -1,0 +1,32 @@
+name: Validate Limine preview
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  limine:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y python3-pil mtools qemu-system-x86 ovmf
+      - name: Obtain pinned official Limine test binary
+        run: |
+          mkdir -p build
+          curl --fail --location https://github.com/Limine-Bootloader/Limine/releases/download/v12.8.0/limine-binary.tar.gz -o build/limine-binary.tar.gz
+          echo 'e21b0a9ce1cf83e79eb0f3fa6d6de49a1b6d1288df11e2232e41c9f4916b673d  build/limine-binary.tar.gz' | sha256sum --check
+          tar -xzf build/limine-binary.tar.gz -C build
+      - run: make limine-package
+      - run: |
+          python3 scripts/limine_preview.py --limine-dir build/limine-binary --resolution 1920x1080
+          python3 scripts/limine_preview.py --limine-dir build/limine-binary --theme quantum-fabric
+          python3 scripts/limine_preview.py --limine-dir build/limine-binary --theme sentient-atlas
+          python3 scripts/limine_preview.py --limine-dir build/limine-binary --theme synaptic-cosmos
+          python3 scripts/limine_preview.py --limine-dir build/limine-binary --theme synaptic-cosmos --resolution 1024x768
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dls-neon-limine-preview
+          path: |
+            dist/dls-neon-limine-*.tar.gz
+            dist/SHA256SUMS-limine
+            build/limine-preview-*/*.png
+            build/limine-preview-*/evidence.json
+          retention-days: 14

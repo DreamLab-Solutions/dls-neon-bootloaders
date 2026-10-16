@@ -1,3 +1,34 @@
+## 0.4.0 — Guided choice and native previews
+
+- Add an unprivileged graphical chooser, real bootloader previews and explicit
+  authenticated plan/apply/restore for qualified Ubuntu/Debian GRUB and Omarchy Limine.
+- Package all four theme choices for both bootloaders; centre the GRUB menu for
+  the AI universe artwork and retain Event Horizon's original composition.
+- Bind application to the exact reviewed config, state, selection and bundle;
+  recheck the GRUB baseline inside the transaction. Keep recovery confirmation,
+  restore conflict checks and no automatic bootloader migration or reboot.
+- Record the user's successful hardware test, monitor-photo observation and changed
+  boot ID without claiming unobserved cold/warm cycles or physical rollback.
+
+# 0.3.0 — AI universe collection
+
+- Package Quantum Fabric, Sentient Atlas and Synaptic Cosmos with recorded
+  prompts/provenance; preserve Event Horizon and its source artwork.
+- Add explicit theme selection and switching, retaining the previous theme and
+  assets. Restore undoes one checkpoint; uninstall unwinds all checkpoints.
+- Verify switch failure/recovery, prior-asset conflicts and interrupted journals.
+- Add per-theme native Limine previews with optional real entry-title fixtures;
+  all boot paths remain demo-only and no host disk is attached.
+
+# 0.2.0 — Omarchy / Limine preview
+
+- Add native Limine appearance adapter; retain existing GRUB target separately.
+- Read-only plan and inspection, verified transaction backup, explicit activation,
+  restore/uninstall, interrupted-write recovery and conservative conflict stops.
+- Real UEFI Limine screenshot harness, no host disk or VM network.
+- Record chosen MIT / CC BY 4.0 component licensing and AI artwork provenance.
+- Hardware installation, OS boot and public visibility remain unverified/pending.
+
 # Changelog
 
 ## 0.1.1 — 2026-10-11

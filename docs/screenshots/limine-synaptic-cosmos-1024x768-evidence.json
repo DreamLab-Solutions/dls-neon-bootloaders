@@ -1,0 +1,18 @@
+{
+  "theme": "synaptic-cosmos",
+  "resolution": "1024x768",
+  "limine_binary_sha256": "3fe0de87c13a12998b3c785b0c57ddfbcd6fc57251c1b0628604583ec8e9a5ff",
+  "qemu": "QEMU emulator version 7.2.22 (Debian 1:7.2+dfsg-7+deb12u18+b3)",
+  "scope": "real bootloader graphics, directory selection and submenu expansion; demo boot paths; no OS kernel or hardware boot tested",
+  "submenu_navigation": "derived from initially visible entry hierarchy; native branding verified after each action",
+  "screenshots": {
+    "01-menu.png": "0703afa57d7200669bc3cd82e78f3abe87a2d3047cbb3962cf7eb06f1a960f2d",
+    "02-selected.png": "787c26b1b722f85ad7f0224174c3e732622131b4a8a77f567a7c826cb72f15cb",
+    "03-submenu.png": "1622efc3781822b6a2b804c7624e0428e97d1ad4c0aa74b443720a8c40073dd1"
+  },
+  "screenshot_files": {
+    "01-menu.png": "limine-synaptic-cosmos-1024x768.png",
+    "02-selected.png": "limine-synaptic-cosmos-1024x768-selected.png",
+    "03-submenu.png": "limine-synaptic-cosmos-1024x768-submenu.png"
+  }
+}

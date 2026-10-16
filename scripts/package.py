@@ -19,8 +19,9 @@ def main():
         shutil.rmtree(stage)
     stage.mkdir(parents=True)
     shutil.copytree(ROOT / "build/theme", stage / "theme")
+    shutil.copytree(ROOT / "build/grub-themes", stage / "themes")
     shutil.copytree(ROOT / "docs", stage / "docs")
-    for file in ["README.md", "LICENSE", "VERSION"]:
+    for file in ["README.md", "LICENSE", "LICENSE-MIT", "ARTWORK-LICENSE.md", "VERSION"]:
         shutil.copy2(ROOT / file, stage / file)
     shutil.copy2(ROOT / "scripts/theme_manager.py", stage / "dls-neon-theme")
     (stage / "dls-neon-theme").chmod(0o755)
@@ -39,10 +40,13 @@ exec python3 "$HERE/dls-neon-theme" install --source "$HERE/theme" "$@"
     data = deb / "usr/share/dls-neon-grub"
     data.mkdir(parents=True)
     shutil.copytree(ROOT / "build/theme", data / "theme")
+    shutil.copytree(ROOT / "build/grub-themes", data / "themes")
     doc = deb / "usr/share/doc/dls-neon-grub"
     shutil.copytree(ROOT / "docs", doc)
     shutil.copy2(ROOT / "README.md", doc / "README.md")
     shutil.copy2(ROOT / "LICENSE", doc / "copyright")
+    shutil.copy2(ROOT / "LICENSE-MIT", doc / "LICENSE-MIT")
+    shutil.copy2(ROOT / "ARTWORK-LICENSE.md", doc / "ARTWORK-LICENSE.md")
     binary = deb / "usr/bin/dls-neon-theme"
     binary.parent.mkdir(parents=True)
     shutil.copy2(ROOT / "scripts/theme_manager.py", binary)

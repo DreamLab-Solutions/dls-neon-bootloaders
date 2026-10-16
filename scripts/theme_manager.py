@@ -153,7 +153,7 @@ class Manager:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             yield
 
-    def install(self, source, profile, timeout):
+    def install(self, source, profile, timeout, expected_config=None):
         verify_assets(source)
         cfg, dropin = self.p(CONFIG), self.p(DROPIN)
         if not cfg.is_file() or not self.p("etc/default/grub").is_file():
@@ -168,6 +168,8 @@ class Manager:
             # Recheck after acquiring the lock.
             if dropin.exists() or self.p(STATE + "/active.json").exists():
                 raise RuntimeError("An activation already exists")
+            if expected_config is not None and digest(cfg) != expected_config:
+                raise RuntimeError("Reviewed GRUB configuration changed; make a new plan")
             stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
             asset_id = hashlib.sha256((source / "manifest.json").read_bytes()).hexdigest()[:12]
             theme_rel = f"boot/grub/themes/{NAME}-{asset_id}-{stamp}"
@@ -279,6 +281,7 @@ def main():
     sub = parser.add_subparsers(dest="action", required=True)
     install = sub.add_parser("install", help="Activate with a validated configuration and backup")
     install.add_argument("--source", type=Path, default=Path("/usr/share/dls-neon-grub/theme"))
+    install.add_argument("--theme", choices=["event-horizon", "quantum-fabric", "sentient-atlas", "synaptic-cosmos"])
     install.add_argument("--profile", choices=GFX, default="1080p")
     install.add_argument("--timeout", type=int, default=8)
     install.add_argument("--dry-run", action="store_true")
@@ -289,6 +292,8 @@ def main():
         if args.action == "install":
             if not 1 <= args.timeout <= 60:
                 parser.error("timeout must be between 1 and 60 seconds")
+            if args.theme:
+                args.source = args.source.parent / "themes" / args.theme
             args.source = args.source.resolve()
             verify_assets(args.source)
             if args.dry_run:

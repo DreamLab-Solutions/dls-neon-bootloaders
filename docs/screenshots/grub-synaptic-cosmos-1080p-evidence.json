@@ -1,0 +1,21 @@
+{
+  "theme": "synaptic-cosmos",
+  "profile": "1080p",
+  "theme_manifest_sha256": "95e648dc72d26b593d4a2ca667107a91b4180d3ef72ffebfc92000b531bfb0be",
+  "resolution": "1920x1080",
+  "scope": "Real GRUB UEFI menu, selection, submenu, console and scrolling; demo paths; no kernel boot",
+  "screenshots": {
+    "01-menu.png": "1e285d9dbb8b39df34da55ba092b61658c3adbf1063675eb70eb235b61e73c59",
+    "02-selected.png": "2f3c0b1ce7ae4cdf30ba58a78a1cf821737f734ac1983f17784762e269d90793",
+    "03-submenu.png": "b6026f7dda19a7e2133a2aed317b0a5f4655ea8173f5421cf0c9523fdfd2da65",
+    "04-console.png": "252e3ff15ba4bf539f1a61597c3a9688f2efd3ee08cc6dc5b6eebda53c986dfc",
+    "05-scrolling.png": "d3d1a1bdb6f820789b38b359dd83c9b446515f967b228a6d0d04ce059ad23a63"
+  },
+  "screenshot_files": {
+    "01-menu.png": "grub-synaptic-cosmos-1080p.png",
+    "02-selected.png": "grub-synaptic-cosmos-1080p-selected.png",
+    "03-submenu.png": "grub-synaptic-cosmos-1080p-submenu.png",
+    "04-console.png": "grub-synaptic-cosmos-1080p-console.png",
+    "05-scrolling.png": "grub-synaptic-cosmos-1080p-scrolling.png"
+  }
+}

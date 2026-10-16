@@ -65,6 +65,19 @@ class Transactions(unittest.TestCase):
         self.assertEqual((self.root / "etc/default/grub").read_text(), "GRUB_TIMEOUT=0\n")
         self.install()  # A restored theme can be installed again without deleting its archive.
 
+    def test_reviewed_baseline_must_still_match_inside_transaction(self):
+        with self.assertRaisesRegex(RuntimeError, "Reviewed GRUB configuration changed"):
+            self.manager.install(self.source, "1080p", 8, expected_config="0" * 64)
+        self.assertEqual(self.cfg.read_text(), self.before)
+        self.assertFalse((self.root / m.DROPIN).exists())
+        self.assertFalse((self.root / m.STATE / "active.json").exists())
+
+    def test_matching_reviewed_baseline_accepted(self):
+        record = self.manager.install(self.source, "1080p", 8, expected_config=m.digest(self.cfg))
+        self.assertEqual(record["status"], "active")
+        self.manager.restore()
+        self.assertEqual(self.cfg.read_text(), self.before)
+
     def test_failed_generator_rolls_back(self):
         self.fail = "grub-mkconfig"
         with self.assertRaises(subprocess.CalledProcessError):

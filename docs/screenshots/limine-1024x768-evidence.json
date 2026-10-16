@@ -1,0 +1,11 @@
+{
+  "resolution": "1024x768",
+  "limine_binary_sha256": "3fe0de87c13a12998b3c785b0c57ddfbcd6fc57251c1b0628604583ec8e9a5ff",
+  "qemu": "QEMU emulator version 7.2.22 (Debian 1:7.2+dfsg-7+deb12u18+b3)",
+  "scope": "real bootloader graphics/navigation only; demo entries; no OS kernel or hardware boot tested",
+  "screenshots": {
+    "01-menu.png": "675bc39b559c3f2c0e3f1d6a61a1937186748413d4a0abc10384817aeb84e6c9",
+    "02-selected.png": "4b6d1eed323a7f8a02457d9ddeae08e7d1526ef1bf7ab06edd84c50eeedb0280",
+    "03-submenu.png": "97aa842f01d5bc1dea2b037a8d7b2358854d4337c394769f7eb560783d7b13ad"
+  }
+}

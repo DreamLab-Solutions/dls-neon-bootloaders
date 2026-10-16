@@ -1,93 +1,80 @@
-# DLS Neon GRUB
+# DreamLab · Temi di avvio
 
-Tema GNU GRUB ispirato al concept DreamLab: portale spaziale, teal, viola e
-giallo **#D9FF00**. Il menu è nativo e navigabile da tastiera; le voci reali
-rimangono quelle generate dalla distribuzione. Versione **0.1.1 — anteprima privata**.
+Versione **0.4.0**: selettore grafico con scelta e anteprima di Event Horizon,
+Quantum Fabric (proposta 2), Sentient Atlas (3) e Synaptic Cosmos (4).
 
-![Tema reale eseguito in GNU GRUB UEFI a 1080p](docs/screenshots/grub-1080p.png)
+## Installazione guidata
 
-Lo screenshot proviene dalla VM di prova. Il concept originale resta conservato
-in `assets/reference/approved-concept.png` nel repository.
+Verifica il checksum esterno, estrai `dls-neon-setup-0.4.0.tar.gz` e dalla sua
+cartella avvia `python3 dls-neon-setup`, senza sudo. Servono Python 3, Tk e
+Polkit/pkexec; il programma segnala le dipendenze mancanti senza installarle.
+[Guida completa, compatibilità e recovery](docs/INSTALLER.md).
 
-## Provarlo su Ubuntu
+Scegli l’immagine, confronta il menu GRUB/Limine e usa **Verifica piano**.
+Il piano autentica una lettura del sistema; l’applicazione è un passo separato,
+con conferma di backup/live USB e approvazione esplicita della modifica.
+Il piano viene ricontrollato prima della transazione e non c’è riavvio automatico.
+**Ripristina precedente** conserva i backup e rifiuta conflitti con aggiornamenti.
 
-Il pacchetto `.deb` copia soltanto i file in `/usr`: **non modifica l'avvio**.
-L'attivazione è un comando separato, crea un backup e non riavvia il computer.
+| Target del selettore | Compatibilità |
+|---|---|
+| Ubuntu/Debian x86-64 UEFI con GRUB | ESP FAT in /boot/efi corrispondente alla voce EFI ubuntu/debian attiva; tutti e quattro i temi; profili 720p/1080p/1440p/4k e attesa esplicita |
+| Omarchy x86-64 UEFI con Limine | Esatto Limine 12.8.0 qualificato, ESP FAT in /boot, Secure Boot disabilitato; tutti e quattro i temi; impostazioni native conservate |
+| Altri loader, combinazioni o versioni | Applicazione fermata; nessuna migrazione automatica |
 
-```sh
-sudo apt install ./dist/dls-neon-grub_0.1.1_all.deb
-dls-neon-theme install --dry-run
-sudo dls-neon-theme install --profile 1080p --timeout 8
-```
+Le anteprime vengono da bootloader reali in VM a 1080p con voci dimostrative.
+Non qualificano l’avvio del kernel; risoluzione e testo reali dipendono dal sistema.
+Il selettore non importa sistemi operativi: Ubuntu sul secondo disco deve essere
+già nel menu del loader o essere selezionato dal firmware.
 
-Il controllo finale rifiuta modifiche inattese alle voci di boot. Se la generazione
-fallisce, la configurazione attiva resta quella precedente. L'installer non usa
-`grub-install`, non scrive nella partizione EFI e non modifica l'ordine UEFI.
+## Gestori separati
 
-Dalla 0.1.1 il controllo tollera il cambio del nome del dispositivo nell'etichetta
-EFI generata, per esempio da `nvme0n1p1` a `nvme1n1p1`, soltanto se identificatore,
-ricerca della partizione tramite UUID e loader EFI restano gli stessi. Numero e
-ordine delle voci continuano a essere verificati. Se l'attivazione si interrompe,
-il backup conserva anche la configurazione candidata e un confronto leggibile.
-
-Il profilo 1080p è il punto di partenza per il laptop. Altri profili: `720p`, `1440p`,
-`4k`. La risoluzione disponibile durante l'avvio dipende dal firmware, non dal
-desktop Linux. GRUB sceglie un fallback se quella richiesta non è disponibile.
-Il profilo tipografico resta quello scelto: per schermi piccoli usare `720p`.
-
-Per usare l'archivio portabile senza installare un pacchetto:
+GRUB su Ubuntu/Debian: il `.deb` copia soltanto file in /usr e non attiva il tema.
 
 ```sh
-tar -xzf dist/dls-neon-grub-0.1.1.tar.gz
-cd dls-neon-grub-0.1.1
-./install.sh --dry-run
-sudo ./install.sh --profile 1080p --timeout 8
-```
-
-## Ripristino
-
-```sh
-sudo dls-neon-theme status
+sudo apt install ./dist/dls-neon-grub_0.4.0_all.deb
+dls-neon-theme install --theme synaptic-cosmos --dry-run
+sudo dls-neon-theme install --theme synaptic-cosmos --profile 1080p --timeout 8
 sudo dls-neon-theme restore
 ```
 
-Con l'archivio portabile usare `sudo python3 ./dls-neon-theme restore`.
-Il ripristino conserva backup e immagini; rimuove il nostro drop-in e ripristina
-esattamente `grub.cfg` se non sono intervenuti aggiornamenti. Se nel frattempo
-cambiano kernel o configurazione, si ferma: seguire [RECOVERY.md](docs/RECOVERY.md).
-Disinstallare il `.deb` non disattiva automaticamente il tema: ripristinare prima.
+L’archivio GRUB portabile offre gli stessi temi con `./install.sh --theme SLUG`.
+Per Limine usare [OMARCHY.md](docs/OMARCHY.md) e il suo gestore dedicato;
+non eseguire l’installer GRUB su Omarchy. Nessuno dei gestori usa grub-install,
+reinstalla EFI o cambia l’ordine del firmware. Le voci restano della distribuzione.
 
-## Sviluppo e prova senza riavviare
+## Build e verifica
 
-Dipendenze di build su Ubuntu/Debian:
+Dipendenze di build Ubuntu/Debian: python3-pil, python3-tk, grub-common,
+grub-efi-amd64-bin, grub2-common, xorriso, mtools, qemu-system-x86, ovmf,
+xvfb, xauth, make. [Ambiente isolato](packaging/Dockerfile.test).
 
 ```sh
-sudo apt install python3-pil grub-common grub-efi-amd64-bin grub2-common xorriso mtools qemu-system-x86 qemu-system-gui ovmf make
 make package
-make preview
+make limine-package
+make setup-package
+xvfb-run -a python3 -m unittest discover -s tests
+python3 scripts/preview.py --headless --theme synaptic-cosmos
+python3 scripts/limine_preview.py --theme synaptic-cosmos
 ```
 
-La VM usa GNU GRUB UEFI, un CD virtuale generato dal progetto e voci dimostrative;
-non collega dischi del laptop né rete. `Enter` nelle voci dimostrative mostra
-solo un messaggio: questa prova verifica grafica, selezione, submenu e console,
-non il caricamento del kernel del laptop.
+I pacchetti e checksum sono in dist; build e ISO in build. Il pacchetto unificato
+richiede le anteprime verificate conservate nel repository: se il tema GRUB cambia,
+rigenerare la prova e aggiornare la sua evidenza prima di confezionarlo.
+Le VM usano supporti usa e getta e non collegano dischi host né rete.
 
-```sh
-python3 scripts/preview.py --headless --profile 1080p
-python3 scripts/preview.py --headless --profile 720p
-python3 scripts/preview.py --headless --profile 1080p --resolution 1024x768
-```
+92 test, incluse interazioni del selettore su display isolato, controllano
+transazioni, confronto voci, integrità, piani e conferme. I tre nuovi temi GRUB
+sono provati con selezione, sottomenu, console e scorrimento. Synaptic Cosmos
+è osservato nella foto del monitor reale, con prova positiva riferita dall’utente
+e nuovo boot ID/kernel Omarchy verificati in sola lettura. Restano da qualificare
+Ubuntu fisico, cicli cold/restart distinti, altri display/OS e rollback fisico.
 
-Screenshot e ISO finiscono in `build/`. `make package` crea archivio, `.deb` e
-`SHA256SUMS` in `dist/`. I font DejaVu sono inclusi con la relativa licenza.
-Il wallpaper è un'immagine statica: animazioni e transizioni non sono implementate.
+- [Prove GRUB](docs/VALIDATION.md) e [Limine / porting](docs/VALIDATION-OMARCHY.md)
+- [Recovery GRUB](docs/RECOVERY.md), [guida Limine](docs/OMARCHY.md)
+- [Design](docs/DESIGN.md), [provenienza AI](docs/ai-artwork-provenance.json)
+- [Licenze](LICENSE), [artwork](ARTWORK-LICENSE.md), [gate pubblicazione](docs/RELEASE.md)
 
-## Fonti, prove e pubblicazione
-
-- [Decisioni grafiche e provenienza](docs/DESIGN.md)
-- [Stato delle verifiche](docs/VALIDATION.md)
-- [Passi prima della pubblicazione](docs/RELEASE.md)
-- [Formato ufficiale dei temi GNU GRUB](https://www.gnu.org/software/grub/manual/grub/html_node/Theme-file-format.html)
-
-Il codice e l'artwork restano in anteprima privata finché non vengono scelti
-licenza e nome pubblico e completata la prova sul laptop.
+Codice MIT; artwork CC BY 4.0 dove applicabile; font con licenza propria;
+marchi DreamLab riservati. Riferimenti e foto personali non sono inclusi nei
+pacchetti runtime. Il repository resta privato: il merge non è una release pubblica.

@@ -1,0 +1,18 @@
+{
+  "theme": "sentient-atlas",
+  "resolution": "1920x1080",
+  "limine_binary_sha256": "3fe0de87c13a12998b3c785b0c57ddfbcd6fc57251c1b0628604583ec8e9a5ff",
+  "qemu": "QEMU emulator version 7.2.22 (Debian 1:7.2+dfsg-7+deb12u18+b3)",
+  "scope": "real bootloader graphics, directory selection and submenu expansion; demo boot paths; no OS kernel or hardware boot tested",
+  "submenu_navigation": "derived from initially visible entry hierarchy; native branding verified after each action",
+  "screenshots": {
+    "01-menu.png": "9b6fd68ff6c0b396fcc03b4c9153e1354d4bd01725bf7fb0dab3988ae4ab3898",
+    "02-selected.png": "5708bfbc238809263c448d080d8ec51fc699a8ebddd465c78430f5ad133eea74",
+    "03-submenu.png": "7a5b43095e14eb259988bc95c3e3c2ca585901df069f23f7cb6272d531f8bc54"
+  },
+  "screenshot_files": {
+    "01-menu.png": "limine-sentient-atlas-1080p.png",
+    "02-selected.png": "limine-sentient-atlas-1080p-selected.png",
+    "03-submenu.png": "limine-sentient-atlas-1080p-submenu.png"
+  }
+}

@@ -7,11 +7,16 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y python3-pil grub-common grub-efi-amd64-bin grub2-common xorriso mtools qemu-system-x86 ovmf
+      - run: sudo apt-get update && sudo apt-get install -y python3-pil python3-tk xvfb xauth grub-common grub-efi-amd64-bin grub2-common xorriso mtools qemu-system-x86 ovmf
       - run: make package
       - run: |
           python3 scripts/preview.py --headless --profile 1080p
           python3 scripts/preview.py --headless --profile 720p
+          python3 scripts/preview.py --headless --theme quantum-fabric
+          python3 scripts/preview.py --headless --theme sentient-atlas
+          python3 scripts/preview.py --headless --theme synaptic-cosmos
+      - run: make setup-package
+      - run: PYTHONPATH=tests xvfb-run -a python3 -m unittest test_setup.Gui -v
       - uses: actions/upload-artifact@v4
         with:
           name: dls-neon-private-preview

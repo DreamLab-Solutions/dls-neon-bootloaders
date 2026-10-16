@@ -1,0 +1,18 @@
+{
+  "theme": "quantum-fabric",
+  "resolution": "1920x1080",
+  "limine_binary_sha256": "3fe0de87c13a12998b3c785b0c57ddfbcd6fc57251c1b0628604583ec8e9a5ff",
+  "qemu": "QEMU emulator version 7.2.22 (Debian 1:7.2+dfsg-7+deb12u18+b3)",
+  "scope": "real bootloader graphics, directory selection and submenu expansion; demo boot paths; no OS kernel or hardware boot tested",
+  "submenu_navigation": "derived from initially visible entry hierarchy; native branding verified after each action",
+  "screenshots": {
+    "01-menu.png": "b863304501776b955baaf7d02762af27e6c7a479e1e9cc31cd84aa74ee7c796f",
+    "02-selected.png": "94b0d5edd69e0bfb5da75e89fb685b92ddd32e47d4ad6b2b3305184132995aab",
+    "03-submenu.png": "b37811a5b3155a715a9fd3bd9ab3222bb06bed93d91977031f7cb2745eef69f4"
+  },
+  "screenshot_files": {
+    "01-menu.png": "limine-quantum-fabric-1080p.png",
+    "02-selected.png": "limine-quantum-fabric-1080p-selected.png",
+    "03-submenu.png": "limine-quantum-fabric-1080p-submenu.png"
+  }
+}

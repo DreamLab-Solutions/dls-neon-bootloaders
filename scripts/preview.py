@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Boot real GRUB in a diskless UEFI VM, optionally save QMP screenshots."""
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -21,14 +22,15 @@ def find_firmware():
     return next((Path(p) for p in candidates if p and Path(p).is_file()), None)
 
 
-def make_iso(profile, resolution):
-    dest = ROOT / "build" / f"preview-{profile}-{resolution}"
+def make_iso(profile, resolution, theme="event-horizon"):
+    dest = ROOT / "build" / (f"preview-{profile}-{resolution}" if theme == "event-horizon" else f"preview-{theme}-{profile}-{resolution}")
     tree = dest / "iso"
     boot = tree / "boot/grub"
     boot.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(ROOT / "build/theme", boot / "themes/dls-neon", dirs_exist_ok=True)
+    source = ROOT / "build/grub-themes" / theme
+    shutil.copytree(source, boot / "themes/dls-neon", dirs_exist_ok=True)
     fonts = "\n".join(f"loadfont ($root)/boot/grub/themes/dls-neon/{p.name}"
-                      for p in sorted((ROOT / "build/theme").glob("*.pf2")))
+                      for p in sorted(source.glob("*.pf2")))
     config = f'''serial --unit=0 --speed=115200
 terminal_output console serial
 insmod all_video
@@ -89,7 +91,11 @@ class QMP:
         time.sleep(0.8)
 
     def screenshot(self, path):
-        self.command("screendump", filename=str(path), format="png")
+        ppm = path.with_suffix('.ppm')
+        self.command("screendump", filename=str(ppm))
+        with Image.open(ppm) as screen:
+            screen.save(path)
+        ppm.unlink()
 
     def close(self):
         self.stream.close()
@@ -117,12 +123,13 @@ def wait_for_theme(monitor, proc, destination, resolution, seconds=90):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--theme", choices=["event-horizon", "quantum-fabric", "sentient-atlas", "synaptic-cosmos"], default="event-horizon")
     parser.add_argument("--profile", choices=RESOLUTIONS, default="1080p")
     parser.add_argument("--resolution", choices=[*RESOLUTIONS.values(), "1024x768"], help="Test a firmware fallback")
     parser.add_argument("--headless", action="store_true", help="Capture actual GRUB screens then exit")
     parser.add_argument("--iso-only", action="store_true")
     args = parser.parse_args()
-    dest, iso = make_iso(args.profile, args.resolution or RESOLUTIONS[args.profile])
+    dest, iso = make_iso(args.profile, args.resolution or RESOLUTIONS[args.profile], args.theme)
     if args.iso_only:
         print(iso)
         return
@@ -191,6 +198,13 @@ def main():
             if proc.poll() is None:
                 proc.terminate()
                 proc.wait(timeout=10)
+    evidence = {'theme': args.theme, 'profile': args.profile,
+                'theme_manifest_sha256': hashlib.sha256((ROOT/'build/grub-themes'/args.theme/'manifest.json').read_bytes()).hexdigest(),
+                'resolution': args.resolution or RESOLUTIONS[args.profile],
+                'scope': 'Real GRUB UEFI menu, selection, submenu, console and scrolling; demo paths; no kernel boot',
+                'screenshots': {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+                                for p in sorted(dest.glob('0[1-5]-*.png'))}}
+    (dest / 'evidence.json').write_text(json.dumps(evidence, indent=2) + '\n')
     print(f"Captured real GRUB screens in {dest}")
 
 
