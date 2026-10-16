@@ -1,75 +1,110 @@
-# DreamLab · Temi di avvio
+# DreamLab Boot Themes
 
-Repository ufficiale: [DreamLab-Solutions/dls-neon-grub](https://github.com/DreamLab-Solutions/dls-neon-grub),
-mantenuto da DreamLab Solutions. Trasferito dal profilo Sunny-Pirate il 2026-10-16;
-la cronologia e le PR sono conservate.
+Four space and AI inspired themes for **GRUB** and **Limine**, with an interactive
+terminal installer, image previews, verified backups and conservative restore.
+Teal, purple and acid yellow `#D9FF00` are the DreamLab palette.
 
-Versione **0.5.0**: console interattiva con scelta e anteprima dei quattro temi.
-Il multiboot già presente — Windows, macOS, Linux e voci personalizzate — rimane
-intatto. GRUB conserva ogni byte originale e aggiunge solo comandi grafici;
-Limine conserva la sezione completa delle voci. Nessuna riscoperta o conversione
-OS durante l’applicazione. [Guida e compatibilità](docs/INSTALLER.md).
+[Download v0.5.1 preview](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.1)
+· [Installation](docs/INSTALLER.md) · [Theme gallery](docs/THEMES.md)
+· [Compatibility](docs/COMPATIBILITY.md) · [Changelog](docs/CHANGELOG.md)
+· [Italiano](docs/it/README.md)
 
-Verifica il checksum, estrai `dls-neon-setup-0.5.0.tar.gz` e nella cartella esegui
-`python3 dls-neon-setup`, senza sudo. Scegli 1–4, **p** per l’anteprima,
-**v** per il piano con tutte le voci, **a** per l’applicazione confermata,
-**r** per il ripristino e **q** per uscire. Python e sudo bastano; nessuna Tk.
-Le anteprime PNG si aprono con il visualizzatore predefinito tramite xdg-open.
+![Synaptic Cosmos running in native Limine at 1920 × 1080](docs/screenshots/limine-synaptic-cosmos-1080p.png)
 
-Il loader viene rilevato dalla voce UEFI attiva, senza whitelist di distribuzioni:
-GRUB/grub2 su layout standard oppure l’esatto Limine 12.8 qualificato. Windows
-Boot Manager e il loader Apple non usano questi temi; si installa dal Linux con
-GRUB/Limine attivo. Le loro voci nel menu non sono un motivo per fermarsi.
-La verifica tecnica, la conservazione delle voci, il backup e le conferme restano.
+*Synaptic Cosmos in the real Limine UEFI renderer, captured in an isolated VM.
+Menu entries are demonstrations; the screenshot is not an OS boot test.*
 
-## Gestori separati
+## Install
 
-GRUB su Ubuntu/Debian: il `.deb` copia soltanto file in /usr e non attiva il tema.
+Use the **combined installer** for guided theme choice and previews on either
+supported bootloader. Download these two assets from the release page:
+
+- `dls-neon-setup-0.5.1.tar.gz`
+- `SHA256SUMS`
+
+In the directory containing both downloads:
 
 ```sh
-sudo apt install ./dist/dls-neon-grub_0.5.0_all.deb
-dls-neon-theme install --theme synaptic-cosmos --dry-run
-sudo dls-neon-theme install --theme synaptic-cosmos --profile 1080p --timeout 8
-sudo dls-neon-theme restore
+sha256sum --check --ignore-missing SHA256SUMS
+tar -xzf dls-neon-setup-0.5.1.tar.gz
+cd dls-neon-setup-0.5.1
+python3 dls-neon-setup
 ```
 
-L’archivio GRUB portabile offre gli stessi temi con `./install.sh --theme SLUG`.
-Per Limine usare [OMARCHY.md](docs/OMARCHY.md) e il suo gestore dedicato;
-non eseguire l’installer GRUB su Omarchy. Nessuno dei gestori usa grub-install,
-reinstalla EFI o cambia l’ordine del firmware. Le voci restano della distribuzione.
+Continue only when the archive reports **OK**. Run the console as your normal
+user; it requests sudo for system inspection and confirmed writes. Choose **1–4**,
+press **p** for a preview, **v** to review the plan, and **a** to apply. **r** restores
+the previous appearance; **q** exits. The current console uses Italian prompts:
+answer **s** to confirm recovery readiness, then type **APPLICA** or **RIPRISTINA**
+when requested. The [installation guide](docs/INSTALLER.md) explains every step.
 
-## Build e verifica
+Requirements: Linux booted through the target GRUB/Limine in x86-64 UEFI mode,
+Python 3.11 or newer, sudo, efibootmgr and util-linux tools. Existing GRUB
+installations also need their native probe, path and syntax-check utilities.
+`xdg-open` is optional for opening images. **Docker is only for development.**
 
-Dipendenze di build Ubuntu/Debian: python3-pil, grub-common,
-grub-efi-amd64-bin, grub2-common, xorriso, mtools, qemu-system-x86, ovmf,
-make. [Ambiente isolato](packaging/Dockerfile.test).
+Have a verified independent backup and a boot-tested UEFI live USB before applying.
+The installer does not reboot; check the next real boot yourself.
 
-```sh
-make package
-make limine-package
-make setup-package
-python3 -m unittest discover -s tests
-python3 scripts/preview.py --headless --theme synaptic-cosmos
-python3 scripts/limine_preview.py --theme synaptic-cosmos
-```
+## Choose your package
 
-I pacchetti e checksum sono in dist; build e ISO in build. Il pacchetto unificato
-richiede le anteprime verificate conservate nel repository: se il tema GRUB cambia,
-rigenerare la prova e aggiornare la sua evidenza prima di confezionarlo.
-Le VM usano supporti usa e getta e non collegano dischi host né rete.
+| Release asset | Who it is for |
+| --- | --- |
+| `dls-neon-setup-0.5.1.tar.gz` | Recommended: terminal chooser, all four themes and GRUB/Limine previews. |
+| `dls-neon-grub_0.5.1_all.deb` | Debian/Ubuntu GRUB users who prefer the manager CLI; package installation only stages files. |
+| `dls-neon-grub-0.5.1.tar.gz` | Portable GRUB manager and themes; manual CLI workflow. |
+| `dls-neon-limine-0.5.1.tar.gz` | Dedicated Limine manager, themes and backup helper; manual CLI workflow. |
+| `SHA256SUMS` | SHA-256 checksums for all four downloadable packages. |
 
-110 test, incluse interazioni della console senza GUI, controllano
-transazioni, conservazione multiboot, integrità, piani e conferme. I tre nuovi temi GRUB
-sono provati con selezione, sottomenu, console e scorrimento. Synaptic Cosmos
-è osservato nella foto del monitor reale, con prova positiva riferita dall’utente
-e nuovo boot ID/kernel Omarchy verificati in sola lettura. Restano da qualificare
-Ubuntu fisico, cicli cold/restart distinti, altri display/OS e rollback fisico.
+The `.deb` and dedicated archives do not include the interactive chooser.
+GitHub's automatically generated **Source code** archives are for contributors;
+they are not the ready-to-run installer. Previews are included in the combined
+archive and work offline. Docker images, QEMU, firmware, bootloader binaries and
+personal backup/configuration reports are not runtime downloads.
 
-- [Prove GRUB](docs/VALIDATION.md) e [Limine / porting](docs/VALIDATION-OMARCHY.md)
-- [Recovery GRUB](docs/RECOVERY.md), [guida Limine](docs/OMARCHY.md)
-- [Design](docs/DESIGN.md), [provenienza AI](docs/ai-artwork-provenance.json)
-- [Licenze](LICENSE), [artwork](ARTWORK-LICENSE.md), [gate pubblicazione](docs/RELEASE.md)
+This is a **preview release**. The repository is currently private, so release
+downloads require access to it. The packages are prepared for distribution;
+repository visibility and reference-material clearance are separate decisions.
 
-Codice MIT; artwork CC BY 4.0 dove applicabile; font con licenza propria;
-marchi DreamLab riservati. Riferimenti e foto personali non sono inclusi nei
-pacchetti runtime. Il repository resta privato: il merge non è una release pubblica.
+## Themes
+
+| Choice | Theme | Composition |
+| --- | --- | --- |
+| 1 | Event Horizon | Original portal artwork; left-aligned GRUB menu. |
+| 2 | Quantum Fabric | Technological fabric with a dark central menu area. |
+| 3 | Sentient Atlas | AI and cosmic structures framing the central menu. |
+| 4 | Synaptic Cosmos | Teal/purple neural universe; default console selection. |
+
+See [all four themes in both bootloaders](docs/THEMES.md). GRUB and Limine retain
+their own native interface and typography; the same background produces different
+menu layouts.
+
+## Compatibility and multiboot
+
+The combined installer qualifies the **active bootloader**, not the distribution
+name. Standard GRUB/grub2 layouts are supported; Limine is restricted to the exact
+qualified **12.8.0** EFI build and layout. Start with the
+[compatibility matrix](docs/COMPATIBILITY.md), especially on other distributions.
+
+Existing Windows, macOS/OpenCore, Linux, recovery, snapshot and custom entries are
+preserved. Applying a theme does not discover or add missing operating systems.
+Native Windows Boot Manager and Apple boot screens cannot use these themes.
+
+GRUB retains the complete original configuration and appends graphics commands;
+Limine retains its entire entry section. Restore checks for later changes before
+writing. See [recovery and removal](docs/RECOVERY.md).
+
+## Documentation and contributing
+
+- [Install, choose a theme and restore](docs/INSTALLER.md)
+- [GRUB CLI and Debian package](docs/GRUB.md)
+- [Limine CLI and Omarchy notes](docs/OMARCHY.md)
+- [Compatibility and known limits](docs/COMPATIBILITY.md)
+- [Build and test](docs/DEVELOPMENT.md), [release process](docs/RELEASE.md)
+- [Validation evidence](docs/VALIDATION.md), [Limine hardware scope](docs/VALIDATION-OMARCHY.md)
+- [Design and artwork provenance](docs/DESIGN.md)
+
+Maintained by [DreamLab Solutions](https://github.com/DreamLab-Solutions).
+Code and documentation: [MIT](LICENSE-MIT). Runtime artwork:
+[CC BY 4.0 where applicable](ARTWORK-LICENSE.md). DejaVu fonts retain their own
+license; DreamLab marks are reserved. See [component licensing](LICENSE).

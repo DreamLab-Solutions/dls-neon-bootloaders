@@ -1,4 +1,4 @@
-name: Validate private preview
+name: Validate GRUB and packages
 on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
@@ -16,6 +16,7 @@ jobs:
           python3 scripts/preview.py --headless --theme sentient-atlas
           python3 scripts/preview.py --headless --theme synaptic-cosmos
       - run: make setup-package
+      - run: python3 scripts/release.py
       - run: PYTHONPATH=tests python3 -m unittest test_setup.ConsoleTests -v
       - uses: actions/upload-artifact@v4
         with:

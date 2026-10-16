@@ -49,6 +49,7 @@ def build_data(out, filename, title):
 
 
 def main():
+    from setup_package import copy_docs
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--theme', choices=THEMES, default='event-horizon')
     args = parser.parse_args()
@@ -70,14 +71,9 @@ def main():
     shutil.copy2(ROOT / 'scripts/limine_backup.py', stage / 'backup-read-only.py')
     for name in ['LICENSE', 'LICENSE-MIT', 'ARTWORK-LICENSE.md']:
         shutil.copy2(ROOT / name, stage / name)
-    shutil.copy2(ROOT / 'docs/OMARCHY.md', stage / 'README.md')
-    shutil.copy2(ROOT / 'docs/VALIDATION-OMARCHY.md', stage / 'VALIDATION-OMARCHY.md')
-    (stage / 'docs').mkdir()
-    for name in ['DESIGN.md', 'artwork-prompt.txt', 'ai-artwork-provenance.json']:
-        shutil.copy2(ROOT / 'docs' / name, stage / 'docs' / name)
-    (stage / 'screenshots').mkdir()
-    for source in (ROOT / 'docs/screenshots').glob('limine-*'):
-        shutil.copy2(source, stage / 'screenshots' / source.name)
+    shutil.copy2(ROOT / 'README.md', stage / 'README.md')
+    shutil.copy2(ROOT / 'VERSION', stage / 'VERSION')
+    copy_docs(stage / 'docs')
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)
     archive = dist / (stage.name + '.tar.gz')

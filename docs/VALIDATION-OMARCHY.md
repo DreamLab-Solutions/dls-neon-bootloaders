@@ -1,181 +1,57 @@
-# Omarchy / Limine port — evidence on 2026-10-16
+# Omarchy / Limine validation
 
-## Verified
+## Qualified environment
 
-- Existing private repository `Sunny-Pirate/dls-neon-grub` was cloned under
-  `~/Projects/dls-neon-grub`; development branch `feat/omarchy-limine`.
-  On 2026-10-16 the same repository (GitHub ID `1414565571`) was transferred to
-  [DreamLab-Solutions/dls-neon-grub](https://github.com/DreamLab-Solutions/dls-neon-grub),
-  retaining private visibility, Git history and pull requests.
-- Actual target: Omarchy 4.0.4, UEFI x86-64, root Btrfs on LUKS2, separate FAT
-  ESP mounted at `/boot`, SecureBoot variable disabled. Installed Limine 12.8.0.
-- The firmware BootCurrent names Limine. The actual ESP EFI executable matches
-  the installed package and the verified upstream 12.8.0 binary byte for byte:
-  SHA256 `3fe0de87c13a12998b3c785b0c57ddfbcd6fc57251c1b0628604583ec8e9a5ff`.
-- Protected configuration read via authenticated read-only operations. It contains
-  Omarchy, its kernel and two snapshots. Ubuntu has a firmware entry on the
-  second physical disk but is absent from the actual Limine menu. Automatic
-  FIND_BOOTLOADERS is enabled; that is not evidence Ubuntu was imported or boots.
-- Exact appearance candidate prepared from the verified baseline: every byte
-  from the first menu entry onward is unchanged. Default entry 2 remains,
-  timeout remains unspecified, security and kernel settings remain unchanged.
-- Local backup copied and reread: all 24 ESP/config files matched archived bytes
-  and a second source read. Private archive and device inventory remain outside
-  the repository in the local Codex work directory. Backup creation itself wrote
-  no boot file; the later approved appearance activation is recorded below.
-- 52 tests pass under both the host Python 3.14 and isolated Debian Python 3.11:
-  26 retained GRUB cases plus 26 Limine cases. Limine coverage includes read-only
-  plans, exact entry preservation, install/restore, later-kernel conflict,
-  interrupted asset/config writes, corruption, symlinks, path traversal,
-  ownership, concurrent change, lock contention and platform/bootloader guards.
-- Both GRUB 0.2.0 archive/deb and Limine 0.2.0 archive built successfully in the
-  isolated Debian test image. The existing GRUB installer logic is unchanged.
-- Real Limine UEFI graphics in QEMU 7.2.22/OVMF, TCG, no network and only a
-  disposable FAT disk image. Menu, selection and snapshot submenu captured at
-  1920x1080, 1280x720 and 1024x768; native palette and distinct screens checked.
-  [1080p screenshot](screenshots/limine-1080p.png),
-  [1024x768 screenshot](screenshots/limine-1024x768.png).
-  Hashes and rendering scope are in the adjacent evidence JSON files.
-- Test download pinned to upstream release v12.8.0 and archive SHA256
-  `e21b0a9ce1cf83e79eb0f3fa6d6de49a1b6d1288df11e2232e41c9f4916b673d`.
+The original port target was Omarchy 4.0.4, x86-64 UEFI, Btrfs root on LUKS2,
+with a separate FAT ESP mounted at `/boot`. The active EFI entry used the
+qualified Limine 12.8.0 binary. Its exact path/hash and current installer limits
+are listed in [COMPATIBILITY.md](COMPATIBILITY.md).
 
-## Limits and remaining gates
+The original configuration contained Omarchy, its kernel and two snapshots.
+Ubuntu had a firmware entry on another disk but was absent from the actual
+Limine menu. Automatic bootloader discovery being enabled was not proof that
+Ubuntu had been imported or could boot. The theme did not add that missing entry.
 
-The UI remains Limine's centred menu and bitmap type. It does not reproduce
-GRUB positioning, outline selection or PF2 typography. 1024x768 stretches the
-source artwork. The source is 1672x941; no new native 4K art was generated.
-Only explicitly qualified 12.8.0 EFI build is allowed by the activation guard.
-A package upgrade that changes it requires review, not disabling the guard.
+Privileged read-only discovery and a verified local ESP/config backup preceded
+the appearance activation. The user confirmed an independent backup and tested
+recovery media, then explicitly approved activation. Recovery readiness was
+user-reported; copying/mounting from the live USB was not observed by the agent.
 
-These VM entries are deliberately demonstrations with nonexistent kernel paths.
-They prove loader rendering/navigation, not OS kernel boot or a full boot
-lifecycle. No actual Omarchy boot under the new theme, Ubuntu boot, 4K firmware
-mode, hardware restart/cold boot, agent-observed independent backup copy, live-USB recovery or
-physical rollback has been verified. The user subsequently confirmed the recovery and independent-copy checks
-complete and explicitly approved activation; those checks are user-reported.
+## Rendering and transactions
 
-No unattended reboot, bootloader migration, EFI executable replacement or NVRAM
-edit was performed. The approved appearance activation is recorded below. Public repository visibility and releases remain pending physical
-qualification and reference-image redistribution clearance. Runtime artwork
-licensing is CC BY 4.0 where applicable; code MIT; DreamLab marks reserved.
+Real Limine 12.8.0 UEFI captures were produced in QEMU/OVMF at 1920×1080,
+1280×720 and 1024×768 on disposable media, without host disks or VM networking.
+All four themes have native menu captures; selection/submenu and Synaptic Cosmos
+fallback captures are preserved in `screenshots/` with adjacent evidence JSON.
+The [gallery](THEMES.md) displays the main screenshots.
 
-## Approved appearance activation — 2026-10-16
+The upstream test archive is pinned to v12.8.0 with SHA-256
+`e21b0a9ce1cf83e79eb0f3fa6d6de49a1b6d1288df11e2232e41c9f4916b673d`.
+Tests cover appearance-only diffs, complete entry-section preservation, verified
+backup, switch history, interrupted journals, stale configuration, corrupt assets,
+symlinks, traversal, concurrent modification, locking and platform guards.
 
-The user explicitly approved proceeding and confirmed completion of the recovery
-checks. The exact approved 0.2.0 archive and local backup checksums were reverified;
-platform guards passed and the live config matched the reviewed baseline.
-Authenticated activation completed, followed by an independent privileged readback:
+## Physical result
 
-- Active config matches the exact reviewed appearance candidate.
-- The entire native entry section is byte-identical to its baseline.
-- All other files in the prior ESP/config inventory remain unchanged.
-- The two owned appearance assets match their checksums; no interrupted journal.
-- Firmware entries and order remain unchanged; transaction backup is retained.
+The user selected Synaptic Cosmos for the laptop experiment and reported a
+successful real boot. The supplied monitor photo was inspected; a new boot ID
+and running Omarchy kernel were read independently afterward. This supports the
+observed appearance and user-reported boot on that installation. It does not
+prove separate cold/restart cycles, physical rollback, another display or boot
+of another operating system.
 
-This verifies files on disk. No hardware reboot or themed OS startup was performed,
-and the current boot ID is unchanged. Visual rendering on the actual display,
-cold boot/restart, desktop return and hardware rollback remain pending. The user
-initiates the reboot; do not silently reboot or mark physical qualification passed.
-Private local backups, raw boot config and identifying inventory are excluded
-from this repository. Public visibility and releases remain pending.
+The 0.4/0.5 selector and later documentation/release work did not reapply the
+theme to laptop boot files. Existing evidence must not be relabelled as hardware
+qualification of every later package. No automatic reboot, EFI replacement,
+NVRAM change or bootloader migration was performed.
 
-## AI universe collection — 0.3.0
+## Current limits
 
-The user selected displayed proposals 2 (Quantum Fabric), 3 (Sentient Atlas)
-and 4 (Synaptic Cosmos) for packaging, and explicitly requested 4 as a laptop
-experiment. This replaces the previous visual direction, without changing the
-native centred Limine menu. Event Horizon remains available for rollback.
+Limine keeps its centred native menu and bitmap typography. 4:3 modes stretch
+the source composition. Other EFI builds or mount layouts need requalification.
+Omarchy reset/kernel/snapshot updates can alter configuration and stop automatic
+restore. See [OMARCHY.md](OMARCHY.md) and [RECOVERY.md](RECOVERY.md).
 
-- Exact selected generated PNG bytes are preserved with hashes and full prompts
-  in ai-artwork-provenance.json. Source dimensions are 1672 × 941, not native 4K.
-- All three new themes render in real Limine 12.8 UEFI/QEMU at 1920×1080, using
-  the real native entry titles from the target but nonexistent demo boot paths.
-  Synaptic Cosmos also renders and navigates at 1024×768; 4:3 stretches the art.
-- 69 tests pass: 65 transaction/comparison cases and four native-menu navigation
-  regression cases. The transaction cases include 13 new theme-history checks:
-  read-only switch plans, previous-theme restore, complete uninstall, bad reviewed
-  hash, edited current/previous assets, config updates, interrupted writes before
-  and after config/state commit, ancestor ownership and checkpoint corruption.
-- Portable catalog/assets are verified; the existing GRUB packages also build.
-  The selectable new catalog belongs to the Limine package; the GRUB target keeps
-  its existing Event Horizon implementation.
-
-The preview navigation derives the visible directory rows from the entry hierarchy,
-checks native branding after each action and requires distinct menu/selection/
-expanded-submenu screenshots. The real target has an initially expanded Omarchy
-root: a kernel row must not be mistaken for the Snapshots directory. The four
-regression cases cover expanded roots, flat demos, hidden children and missing
-directories. VM entries use nonexistent boot paths and cannot prove a kernel boot.
-
-## Approved Synaptic Cosmos experiment — 2026-10-16
-
-The user selected displayed proposals 2–4 for the package and explicitly requested
-proposal 4 on the laptop. The recovery approval and prior full backup were retained.
-The authenticated switch from Event Horizon to Synaptic Cosmos passed host/version
-and exact current-config guards. Independent privileged readback verified:
-
-- Selected artwork and appearance hashes match the reviewed package.
-- The complete native boot-entry section is byte-identical.
-- Every other file in the prior ESP/config inventory and firmware entries is unchanged.
-- The new transaction backup and its before/after hashes are valid; no pending journal.
-- Event Horizon assets and the previous transaction checkpoint are retained and verified.
-
-The 0.3.0 manager's restore action returns one checkpoint to Event Horizon;
-uninstall unwinds both checkpoints to the original Omarchy appearance. Physical
-rollback is not yet verified. The running boot ID remains unchanged: this verifies
-the configured files, not the next hardware boot, display result or desktop return.
-The user initiates the reboot. Public visibility and releases remain pending.
-Private backups, full boot configuration and device identifiers remain excluded.
-
-
-## Physical evidence and guided installer — 0.4.0
-
-The user supplied a monitor photograph showing the native Synaptic Cosmos menu
-and stated “testato e funziona perfettamente”. The photograph is directly observed;
-the test result is user-reported. A fresh host read independently observed a new
-boot ID and a running Omarchy kernel after the theme activation. The private photo,
-boot IDs and identifying host report are excluded from GitHub. This supports a
-real displayed themed menu and a subsequent running system, not independent
-verification of every snapshot, cold/warm cycle, internal display or rollback.
-
-The user explicitly requested completion of choice/preview for both bootloaders
-before the authorized PR merge. Version 0.4.0 adds a Tk chooser with unprivileged
-previews, an authenticated read-only plan and explicit reviewed application/restore.
-Its source/package tests cover integrity, unsafe paths/symlinks, target mismatch,
-UEFI partition mismatch, missing approvals/recovery, stale plans and UI confirmation
-and selection changes. Native GRUB previews cover all three new artworks including
-selection, submenu, console and scrolling; those entries remain demo-only.
-
-The installer matrix and exact limitations are in [INSTALLER.md](INSTALLER.md).
-The Limine manager and its runtime data are unchanged by the chooser. No theme was
-reapplied to the working laptop to test the new interface. Public release remains
-separate from merging the private implementation.
-
-The final 0.4.0 suite passes 92 tests on isolated Debian Python 3.11/Tk/Xvfb.
-The packaged chooser was opened and its GRUB/Limine previews switched without
-requesting privileges or enabling application before a reviewed plan.
-
-
-## 0.5.0 console and multiboot follow-up
-
-The user explicitly requested an interactive console instead of the Tk UI and
-asked that Windows, macOS and other Linux entries not stop theme installation.
-The new console has no GUI dependencies. Tests cover browsing without privilege,
-all-OS plan display, preview selection, stale review invalidation, cancellation,
-recovery/final confirmations, apply and restore dispatch.
-
-GRUB now preserves every original config byte, appends only native appearance
-commands and retains a dedicated generator hook. Installation never runs
-os-prober or grub-mkconfig. UUID/GRUB-relative asset lookup, grub2 layouts/tools,
-legacy restore and failure cleanup are covered. Limine tests likewise preserve
-mixed Windows/macOS/Linux/custom entry sections exactly. Detection no longer
-uses distro names; actual EFI/layout/hash safeguards remain. This is not a claim
-of physical Windows/macOS boot or universal loader compatibility. No running
-laptop boot files were changed for these tests.
-
-The 0.5.0 suite passes 110 tests. Real GRUB/UEFI menu navigation uses the same
-appearance helper as installation, appended after mixed-OS demo entries. A further
-Synaptic Cosmos run changes a pre-existing 1024×768 graphics mode to the requested
-1080p, checks native menu pixels and captures all five distinct screens. Runtime
-packages retain previews and linked documentation images; bulk test captures stay
-in Git to reduce download size.
+Runtime packages exclude private configs/backups, the hardware photo and the
+original concept reference. Repository visibility still needs separate reference
+clearance because excluded files can remain in Git history.

@@ -1,86 +1,106 @@
-# DreamLab · Installer console — 0.5.0
+# Installation
 
-Il tema modifica la grafica di GRUB o Limine. **Windows, macOS, altri Linux e
-voci personalizzate già presenti non vengono filtrati o rimossi.** La scelta
-dell’immagine non aggiunge sistemi operativi e non ne modifica loader, kernel,
-ordine o opzioni. L’installer viene eseguito da Linux; non installa questo tema
-nel Windows Boot Manager o nel loader Apple e non migra automaticamente l’avvio.
+Use the combined archive for an interactive terminal workflow on GRUB or Limine.
+For a manager-only installation, use the [GRUB](GRUB.md) or [Limine](OMARCHY.md)
+guide. Check [compatibility](COMPATIBILITY.md) before applying a theme.
 
-## Avvio e scelta
+## 1. Download and verify
 
-Verifica il checksum esterno, estrai `dls-neon-setup-0.5.0.tar.gz` e nella cartella
-avvia `python3 dls-neon-setup`, senza sudo. Servono soltanto Python 3 e sudo per
-le azioni amministrative. Tk e Polkit non sono richiesti. Per aprire le anteprime
-nel visualizzatore predefinito viene usato `xdg-open`; se non è disponibile,
-resta indicato il percorso PNG da aprire su un altro schermo/computer.
+Open [Releases](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.1)
+and download `dls-neon-setup-0.5.1.tar.gz` and `SHA256SUMS` from **Assets**.
+Do not use the automatic Source code download as an installer. While the
+repository is private, sign in with an account that has repository access.
 
-- **1–4**: scegli Event Horizon, Quantum Fabric (2), Sentient Atlas (3), Synaptic Cosmos (4).
-- **p**: apri l’anteprima del menu reale in VM; **b** confronta GRUB/Limine.
-- **d**: rileva il loader dalla voce EFI attiva; non dal nome della distribuzione.
-- **v**: verifica il piano in sola lettura e mostra tutte le voci da conservare.
-- **o**: scegli profilo e attesa GRUB. Limine mantiene le impostazioni native.
-- **a**: applica dopo il piano, conferma della recovery e parola **APPLICA**.
-- **r**: ripristina il checkpoint dopo conferma separata **RIPRISTINA**.
-- **q**: esci senza altre operazioni.
+From the download directory:
 
-Scelta e anteprime funzionano senza autenticazione. Una verifica non riuscita
-lascia aperta la console per continuare a sfogliare. L’applicazione richiede un
-loader e percorsi verificabili, un pacchetto integro e lo stesso piano revisionato:
-non si aggirano configurazioni ambigue, binari non qualificati o backup corrotti.
-Nessun riavvio automatico. Verificare personalmente il successivo avvio reale.
+```sh
+sha256sum --check --ignore-missing SHA256SUMS
+tar -xzf dls-neon-setup-0.5.1.tar.gz
+cd dls-neon-setup-0.5.1
+python3 dls-neon-setup
+```
 
-## Multiboot
+The checksum command must report `dls-neon-setup-0.5.1.tar.gz: OK`.
+If you prefer GitHub CLI, download the same assets with:
 
-GRUB 0.5 conserva **ogni byte del file originale**, inclusi preambolo, funzioni,
-Windows, macOS/OpenCore, altri Linux, recovery, submenus e voci sconosciute.
-Aggiunge in fondo un blocco con soli comandi grafici: non esegue grub-mkconfig,
-update-grub o os-prober durante l’installazione. Un hook dedicato in
-`/etc/grub.d/99_dls_neon_theme` emette soltanto quel blocco durante i successivi
-aggiornamenti della distribuzione. Quegli aggiornamenti continuano a gestire le
-proprie voci; il tema non ne altera la politica di rilevamento.
+```sh
+gh release download v0.5.1 --repo DreamLab-Solutions/dls-neon-grub \
+  --pattern 'dls-neon-setup-0.5.1.tar.gz' --pattern SHA256SUMS
+```
 
-Gli asset GRUB vengono individuati tramite UUID del filesystem e percorso
-GRUB-relativo ottenuti dagli strumenti nativi: sono considerati /boot separato
-e Btrfs. I layout supportati sono `/boot/grub/grub.cfg` e `/boot/grub2/grub.cfg`,
-con strumenti `grub-*` oppure `grub2-*` e directory generatore `/etc/grub.d`.
-Sono conservati anche i menu dinamici BLS (`blscfg`): la console li indica senza
-riscrivere i file delle voci in /boot/loader/entries.
-Il loader EFI attivo e la ESP montata devono corrispondere; non serve che la
-distribuzione si chiami Ubuntu, Debian o Omarchy. Le varianti di layout sono
-provate con fixture; non sono una certificazione fisica di ogni distribuzione.
+## 2. Check prerequisites
 
-Limine conserva byte per byte la sezione completa delle voci e cambia soltanto
-le opzioni grafiche. Non impone Omarchy/pacman né un’etichetta firmware chiamata
-Limine: verifica il percorso EFI, l’esatto binario 12.8.0 qualificato, UEFI x86-64,
-ESP FAT scrivibile in /boot e la guardia Secure Boot esistente. Versioni, percorsi
-o loader differenti richiedono verifica tecnica; il solo nome di un altro OS nel
-menu non ferma l’installazione.
+Run from the installed Linux system, booted in x86-64 UEFI mode through the
+bootloader you intend to theme. You need Python 3.11+, sudo, efibootmgr and
+util-linux (`findmnt`, `lsblk`). GRUB also needs `grub-script-check`, `grub-probe`
+and `grub-mkrelpath`, or their `grub2-*` equivalents. Keep the existing bootloader;
+use your distribution's packages to supply missing inspection utilities.
 
-Se Windows, macOS o un altro Linux è sul disco ma manca dal menu, il tema non lo
-crea. Va gestito dalla configurazione del bootloader o dal menu firmware, con una
-procedura dedicata. La presenza di una voce non prova che quel sistema sia
-avviabile: non cambiamo BCD, FileVault/BitLocker, OpenCore o loader di terzi.
+Image previews use `xdg-open` when available. Otherwise the console prints a PNG
+path you can open yourself. Browsing needs no root, Tk, Polkit, Docker, QEMU or
+network connection. A successful preview does not qualify the host boot layout.
 
-## Backup e ripristino
+Before applying, verify a backup on independent media and boot-test a suitable
+UEFI live USB. For encrypted root, confirm that you can unlock it from that USB.
+Keep recovery material and saved system inventory private. Avoid kernel,
+bootloader and snapshot updates while inspecting or applying the theme.
 
-Prima di applicare: backup indipendente verificato e chiavetta live UEFI usabile.
-L’installer conserva un backup di transazione; la conferma della console è una
-dichiarazione dell’utente sulla propria recovery. Non registra passphrase.
-Il ripristino rifiuta modifiche successive e backup/asset/hook corrotti, conserva
-le copie e gestisce anche i vecchi record GRUB con drop-in 0.4 e precedenti.
-GRUB richiede il ripristino prima di una nuova scelta; Limine mantiene la propria
-cronologia. [Recovery GRUB](RECOVERY.md), [gestore Limine](OMARCHY.md).
+## 3. Choose, preview and review
 
-## Prove e licenze
+Start `python3 dls-neon-setup` as your normal user. The console opens with
+Synaptic Cosmos selected. Its current prompts are in Italian; the keys below
+are the same in every environment.
 
-Test di transazione e console con Windows, macOS, altri Linux e voci custom;
-prove di menu, scelta, submenu, console e scrolling in bootloader UEFI reali in VM.
-Queste voci sono dimostrative e non provano l’avvio reale di Windows/macOS.
-Resta valida la prova fisica riferita dall’utente per Synaptic Cosmos su Omarchy;
-nessuna nuova applicazione è stata effettuata sul laptop per provare la console.
+| Key | Action |
+| --- | --- |
+| **1**, **2**, **3**, **4** | Select Event Horizon, Quantum Fabric, Sentient Atlas or Synaptic Cosmos. |
+| **p** | Open the selected image with the native bootloader menu. |
+| **b** | Switch the preview between GRUB and Limine; this does not change the host target. |
+| **d** | Inspect the active UEFI entry to detect the actual bootloader. Requires sudo. |
+| **v** | Read and validate the host plan; list the existing entries to retain. Requires sudo. |
+| **o** | Choose GRUB typography/resolution profile and a 1–60 second timeout. |
+| **a** | Apply the reviewed plan after separate recovery and write confirmations. |
+| **r** | Restore the previous appearance checkpoint after a fresh plan and confirmation. |
+| **q** | Exit. |
 
-Codice MIT, artwork CC BY 4.0 dove applicabile, provenienza AI e marchi DreamLab
-riservati. La foto personale del monitor e i backup restano fuori dal repository.
-La visibilità e la release pubblica rimangono separate dal lavoro privato.
+For GRUB the default is the 1080p profile and an 8-second visible menu. Limine
+keeps its current resolution, default entry and timeout. A Limine installation
+whose menu is hidden needs a separate reviewed visibility change.
 
-Fonti tecniche: [GRUB multiboot](https://www.gnu.org/software/grub/manual/grub/html_node/Multi_002dboot-manual-config.html), [ricerca UUID](https://www.gnu.org/software/grub/manual/grub/html_node/search.html).
+## 4. Apply explicitly
+
+Press **v**, read the proposed target, selected theme, settings and entry list.
+Press **a** only after that review. At the recovery question `[s/N]`, enter **s**
+(Italian for yes) only if the independent backup and live USB are verified.
+Then type **APPLICA** exactly. Cancellation leaves the boot files untouched.
+Sudo is requested for the privileged operation, not for opening the console.
+
+The installer verifies bundle integrity, the active EFI target and the exact
+reviewed configuration before writing. It retains a transaction backup and
+checks the resulting files. A changed plan or unsupported layout stops writes;
+you can still browse images. Never disable the guards to force installation.
+
+No reboot is performed. Save your work, reboot yourself and check the actual
+menu, chosen Linux boot and desktop return. File verification alone is not a
+successful reboot test.
+
+## Change theme or remove it
+
+GRUB: use **v**, then **r**, confirm **s** and **RIPRISTINA**. Review and apply
+the new theme after restoring. GRUB deliberately requires that extra restore.
+
+Limine: applying a new theme creates another checkpoint. **r** restores one
+checkpoint. To unwind all checkpoints, use the dedicated manager's `uninstall`
+command described in [OMARCHY.md](OMARCHY.md).
+
+Keep the extracted tools and backups until restore is complete. If a later
+kernel or administrator change causes a conflict, follow [RECOVERY.md](RECOVERY.md)
+instead of replacing the whole configuration with an old backup.
+
+## Existing Windows, macOS or other Linux installations
+
+Existing entries are retained, including custom entries, submenus, snapshots and
+dynamic GRUB BLS sources. The installer does not run OS discovery, rewrite BCD,
+OpenCore, BitLocker/FileVault settings, or add entries for another disk. Missing
+entries need a separate bootloader/firmware configuration task. Entry preservation
+does not certify that the corresponding operating system boots on your hardware.

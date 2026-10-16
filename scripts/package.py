@@ -43,8 +43,9 @@ exec python3 "$HERE/dls-neon-theme" install --source "$HERE/theme" "$@"
     shutil.copytree(ROOT / "build/theme", data / "theme")
     shutil.copytree(ROOT / "build/grub-themes", data / "themes")
     doc = deb / "usr/share/doc/dls-neon-grub"
-    copy_docs(doc)
+    copy_docs(doc / "docs")
     shutil.copy2(ROOT / "README.md", doc / "README.md")
+    shutil.copy2(ROOT / "LICENSE", doc / "LICENSE")
     shutil.copy2(ROOT / "LICENSE", doc / "copyright")
     shutil.copy2(ROOT / "LICENSE-MIT", doc / "LICENSE-MIT")
     shutil.copy2(ROOT / "ARTWORK-LICENSE.md", doc / "ARTWORK-LICENSE.md")
@@ -59,7 +60,8 @@ Priority: optional
 Architecture: all
 Maintainer: DreamLab Solutions <info@dreamlab.solutions>
 Depends: python3, grub-common, grub2-common
-Description: DreamLab neon portal theme for GNU GRUB (private preview)
+Homepage: https://github.com/DreamLab-Solutions/dls-neon-grub
+Description: DreamLab space and AI theme collection for GNU GRUB (preview)
  Native GRUB theme with teal, purple and acid yellow accents.
  Installing the package only stages files; activate explicitly using
  dls-neon-theme install. Includes transactional backup and restore.

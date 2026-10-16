@@ -1,30 +1,47 @@
-# Design e provenienza
+# Design and provenance
 
-Fonte: conversazione ChatGPT private design discussion (archived outside Git),
-letta il 2026-10-11, inclusa l'immagine finale allegata e approvata dall'utente.
-Il recupero disponibile contiene cinque scambi recenti: non presume altri requisiti.
+DreamLab Boot Themes uses teal, purple and acid yellow `#D9FF00`. Boot labels,
+selection and operational text are rendered by the bootloader, never embedded
+into the three AI universe backgrounds. See the [gallery](THEMES.md).
 
-Decisioni esplicite recuperate: palette dls-theme con teal, viola e giallo; teal
-distinguibile dal cyan; giallo esatto #D9FF00; usare l'ultima immagine allegata.
-L'immagine originale è conservata senza alterazioni in assets/reference/approved-concept.png.
+## Composition
 
-Il tool integrato imagegen ha ricavato assets/backgrounds/portal.png rimuovendo
-solo le finte voci e il rettangolo selezionato dal concept. Prompt completo in
-artwork-prompt.txt. Il risultato è stato ispezionato visivamente. Non è stata
-rigenerata l'identità DreamLab né cambiata la composizione deliberatamente.
-La tinta UI selezionata è deterministica #D9FF00; il colore del raster è pittorico.
+Event Horizon retains the approved portal concept. Its GRUB menu is positioned
+on the left; Limine's native centred menu prompted the three newer compositions.
+Quantum Fabric, Sentient Atlas and Synaptic Cosmos keep a quiet central area
+for both bootloaders. Synaptic Cosmos is the console's default selection.
 
-Le etichette di avvio sono generate da Ubuntu, non impresse nel wallpaper.
-"Recovery mode" dipende dai submenu della distribuzione. Il tema non aggiunge
-azioni di spegnimento o modifica delle impostazioni firmware al sistema reale.
+GRUB uses native `boot_menu` widgets, nine-slice selection/scrollbar assets,
+DejaVu Sans Mono PF2 fonts and an opaque console. Font/layout profiles cover
+720p, 1080p, 1440p and 4K. Limine uses its own menu/bitmap typography and
+appearance keys. It cannot reproduce GRUB's arbitrary positioning or fonts.
+The source artwork is 1672×941; scaling is not a new native 4K master.
 
-Implementazione nativa: boot_menu, nove tasselli per la selezione, scrollbar,
-font PF2 DejaVu Sans Mono, terminale opaco per mantenere leggibile la console.
-Layout relativi allo schermo e quattro scale tipografiche. Il wallpaper mantiene
-il testo di branding del riferimento; il testo operativo è disegnato da GRUB.
+## Artwork sources
 
-Il progetto è autonomo rispetto ai repository della piattaforma DreamLab e
-Sunnyday: non modifica le loro fondazioni grafiche o librerie. Il registro
-SharePoint esistente è stato consultato; nessuna scheda specifica per questo
-nuovo prodotto è stata identificata. Questa nota documenta il progetto locale,
-non dichiara un aggiornamento del registro condiviso.
+The original approved concept is preserved unmodified in `assets/reference`.
+Event Horizon's runtime `assets/backgrounds/portal.png` was generated/edited
+with OpenAI image generation to remove simulated menu content; the recorded
+prompt remains in `artwork-prompt.txt`. The supplied concept itself is not
+covered by the runtime artwork grant and needs separate redistribution review.
+
+The user selected proposals 2–4 for the package on 2026-10-16. Exact prompts,
+source revisions and image hashes are recorded in
+[ai-artwork-provenance.json](ai-artwork-provenance.json). The original Limine
+screenshot was used as a layout reference. Runtime artwork pixels are copied
+without retouching; the installer adapts native appearance settings.
+
+Code/documentation and runtime artwork have separate grants; consult the
+component licensing files included in every package. AI provenance is disclosed;
+exclusive copyright, human-only authorship and third-party clearance are not
+claimed. DreamLab marks remain reserved.
+
+## Project boundaries
+
+The canonical repository is
+[DreamLab-Solutions/dls-neon-grub](https://github.com/DreamLab-Solutions/dls-neon-grub),
+transferred from Sunny-Pirate on 2026-10-16 with Git history and PRs preserved.
+It is an independent DreamLab product. It does not modify the DreamLab web
+platform, Sunnyday foundations or EzRider components. Durable cross-environment
+decisions are recorded through the shared Project Registry; source and detailed
+validation evidence remain in this repository.

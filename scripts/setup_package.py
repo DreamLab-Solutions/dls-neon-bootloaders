@@ -14,14 +14,19 @@ THEMES = {'event-horizon':'Event Horizon','quantum-fabric':'Quantum Fabric',
 
 
 def copy_docs(target):
-    # Runtime keeps documentation and directly linked screenshots; bulk test captures stay in Git.
-    shutil.copytree(ROOT/'docs',target,ignore=shutil.ignore_patterns('*.png'))
-    for document in (ROOT/'docs').rglob('*.md'):
-        for name in re.findall(r'\((screenshots/[^)]+\.png)\)',document.read_text()):
-            source=ROOT/'docs'/name
-            if source.is_file():
-                destination=target/name;destination.parent.mkdir(parents=True,exist_ok=True)
-                shutil.copy2(source,destination)
+    """Keep offline guides and exactly their referenced screenshots together."""
+    docs = ROOT / 'docs'
+    shutil.copytree(docs, target, ignore=shutil.ignore_patterns('*.png'))
+    for document in docs.rglob('*.md'):
+        for name in re.findall(r'!\[[^\]]*\]\(([^)]+)\)', document.read_text()):
+            if '://' in name:
+                continue
+            source = (document.parent / name).resolve()
+            if not source.is_relative_to(docs.resolve()) or not source.is_file():
+                raise RuntimeError('Missing or external documentation image: ' + name)
+            destination = target / source.relative_to(docs.resolve())
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
 
 
 def main():
@@ -55,8 +60,8 @@ def main():
     (target/'catalog.json').write_text(json.dumps(catalog,indent=2)+'\n')
     for name in ('LICENSE','LICENSE-MIT','ARTWORK-LICENSE.md'):
         shutil.copy2(ROOT/name,target/name)
-    readme=(ROOT/'docs/INSTALLER.md').read_text().replace('(OMARCHY.md)','(docs/OMARCHY.md)').replace('(RECOVERY.md)','(docs/RECOVERY.md)')
-    (target/'README.md').write_text(readme)
+    shutil.copy2(ROOT/'README.md', target/'README.md')
+    shutil.copy2(ROOT/'VERSION', target/'VERSION')
     copy_docs(target/'docs')
     files={str(p.relative_to(target)):hashlib.sha256(p.read_bytes()).hexdigest()
            for p in sorted(target.rglob('*')) if p.is_file()}

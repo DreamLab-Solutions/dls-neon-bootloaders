@@ -1,0 +1,65 @@
+name: Prepare release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prepare-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        run: |
+          python3 -c 'import pathlib,re; v=pathlib.Path("VERSION").read_text().strip(); assert re.fullmatch(r"\d+\.\d+\.\d+",v)'
+          echo "value=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+      - run: sudo apt-get update && sudo apt-get install -y python3-pil grub-common grub-efi-amd64-bin grub2-common dpkg-dev
+      - run: make package
+      - run: make limine-package
+      - run: make setup-package
+      - run: python3 scripts/release.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-v${{ steps.version.outputs.value }}
+          path: dist/release/
+          if-no-files-found: error
+          retention-days: 14
+
+  draft:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-v${{ needs.build.outputs.version }}
+          path: release
+      - name: Create a draft prerelease without replacing existing assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          tag="v${RELEASE_VERSION}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; refusing to replace it."
+            exit 1
+          fi
+          if gh api "repos/${GH_REPO}/git/ref/tags/${tag}" >/dev/null 2>&1; then
+            echo "Tag $tag already exists; review it before release creation."
+            exit 1
+          fi
+          gh release create "$tag" release/* --target "$RELEASE_COMMIT" \
+            --draft --prerelease --title "DreamLab Boot Themes $tag — preview" \
+            --notes-file release/RELEASE-NOTES.md
