@@ -15,7 +15,7 @@ includes commercial reuse under CC BY 4.0 and does not imply endorsement.
 The DreamLab name, wordmark and other brand identifiers remain reserved as
 trademarks; no trademark license is granted. Their presence in the image does
 not authorize branding another product as DreamLab. Rights in third-party
-material are not granted. Reference images in `assets/reference` are excluded.
+material are not granted. Original reference images are privately archived outside Git and excluded.
 
 ## Provenance and scope
 

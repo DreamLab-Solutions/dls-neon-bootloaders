@@ -3,3 +3,12 @@
 /local/
 __pycache__/
 *.pyc
+
+# Private publication/recovery material stays outside source.
+/assets/reference/
+/private/
+/backups/
+.env
+.env.*
+*.pem
+*.key

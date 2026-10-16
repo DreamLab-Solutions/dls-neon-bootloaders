@@ -1,7 +1,7 @@
 # Limine manager and Omarchy
 
 Use the [combined installer](INSTALLER.md) for guided image choice and previews.
-This page covers the dedicated `dls-neon-limine-0.5.1.tar.gz` archive and its CLI.
+This page covers the dedicated `dls-neon-limine-0.5.2.tar.gz` archive and its CLI.
 It contains all four themes, a backup helper and documentation. It does not
 install Limine or GRUB. Check the exact supported layout in
 [COMPATIBILITY.md](COMPATIBILITY.md).
@@ -9,13 +9,13 @@ install Limine or GRUB. Check the exact supported layout in
 ## Download, inspect and back up
 
 Download the dedicated archive and `SHA256SUMS` from
-[Releases](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.1).
+[Releases](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.2).
 In the download directory:
 
 ```sh
 sha256sum --check --ignore-missing SHA256SUMS
-tar -xzf dls-neon-limine-0.5.1.tar.gz
-cd dls-neon-limine-0.5.1
+tar -xzf dls-neon-limine-0.5.2.tar.gz
+cd dls-neon-limine-0.5.2
 python3 dls-neon-limine themes
 sudo python3 dls-neon-limine inspect
 sudo python3 dls-neon-limine plan --theme synaptic-cosmos

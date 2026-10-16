@@ -7,10 +7,9 @@ with a separate FAT ESP mounted at `/boot`. The active EFI entry used the
 qualified Limine 12.8.0 binary. Its exact path/hash and current installer limits
 are listed in [COMPATIBILITY.md](COMPATIBILITY.md).
 
-The original configuration contained Omarchy, its kernel and two snapshots.
-Ubuntu had a firmware entry on another disk but was absent from the actual
-Limine menu. Automatic bootloader discovery being enabled was not proof that
-Ubuntu had been imported or could boot. The theme did not add that missing entry.
+The theme preserves original menu and snapshot integration. Missing OS entries
+need separate configuration; firmware/discovery settings do not prove OS boot.
+Detailed host inventory is retained privately.
 
 Privileged read-only discovery and a verified local ESP/config backup preceded
 the appearance activation. The user confirmed an independent backup and tested

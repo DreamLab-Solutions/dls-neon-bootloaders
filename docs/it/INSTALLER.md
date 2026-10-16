@@ -1,13 +1,13 @@
 # Installazione da Linux
 
-Scarica `dls-neon-setup-0.5.1.tar.gz` e `SHA256SUMS` dagli asset della
-[release](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.1).
+Scarica `dls-neon-setup-0.5.2.tar.gz` e `SHA256SUMS` dagli asset della
+[release](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.2).
 Nella cartella dei download:
 
 ```sh
 sha256sum --check --ignore-missing SHA256SUMS
-tar -xzf dls-neon-setup-0.5.1.tar.gz
-cd dls-neon-setup-0.5.1
+tar -xzf dls-neon-setup-0.5.2.tar.gz
+cd dls-neon-setup-0.5.2
 python3 dls-neon-setup
 ```
 

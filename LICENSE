@@ -4,8 +4,7 @@ Code and documentation: MIT, see LICENSE-MIT.
 Runtime artwork in assets/backgrounds: CC BY 4.0 to the extent of applicable
 rights, see ARTWORK-LICENSE.md. DreamLab name and marks are reserved.
 DejaVu fonts: assets/fonts/LICENSE-DejaVu.txt.
-Reference material in assets/reference is excluded from the artwork grant;
-its provenance and redistribution clearance must be reviewed before public
-repository visibility changes. It is not included in the Limine package.
+Original reference material is privately archived outside Git and excluded
+from the artwork grant and distributed repository/packages.
 Third-party bootloader and firmware binaries used for testing are not part
 of the distributed theme archive and retain their respective licenses.

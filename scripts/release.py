@@ -78,6 +78,7 @@ def validate_tar(path, version):
     if expected_root.startswith('dls-neon-setup-') and 'manifest.json' not in files:
         raise RuntimeError('Missing combined package manifest')
     check_links(files)
+    return files
 
 
 def validate_deb(path, version):
@@ -90,6 +91,7 @@ def validate_deb(path, version):
     if 'usr/bin/dls-neon-theme' not in files or not any(n.endswith('/LICENSE-DejaVu.txt') for n in files):
         raise RuntimeError('Incomplete Debian runtime package')
     check_links(files)
+    return files
 
 
 def asset_names(version):
@@ -177,13 +179,15 @@ def main():
     version = (ROOT/'VERSION').read_text().strip()
     if not re.fullmatch(r'\d+\.\d+\.\d+', version):
         raise RuntimeError('Invalid release version')
+    from privacy_check import check_files
     names = asset_names(version)
     for name in names:
         path = args.dist/name
         if name.endswith('.deb'):
-            validate_deb(path, version)
+            contents = validate_deb(path, version)
         else:
-            validate_tar(path, version)
+            contents = validate_tar(path, version)
+        check_files(contents)
     notes = release_notes(version)
     stage = args.dist/'release'
     if stage.exists():

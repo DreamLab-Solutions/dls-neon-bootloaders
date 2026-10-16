@@ -4,7 +4,7 @@ Four space and AI inspired themes for **GRUB** and **Limine**, with an interacti
 terminal installer, image previews, verified backups and conservative restore.
 Teal, purple and acid yellow `#D9FF00` are the DreamLab palette.
 
-[Download v0.5.1 preview](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.1)
+[Download v0.5.2 preview](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.2)
 · [Installation](docs/INSTALLER.md) · [Theme gallery](docs/THEMES.md)
 · [Compatibility](docs/COMPATIBILITY.md) · [Changelog](docs/CHANGELOG.md)
 · [Italiano](docs/it/README.md)
@@ -19,15 +19,15 @@ Menu entries are demonstrations; the screenshot is not an OS boot test.*
 Use the **combined installer** for guided theme choice and previews on either
 supported bootloader. Download these two assets from the release page:
 
-- `dls-neon-setup-0.5.1.tar.gz`
+- `dls-neon-setup-0.5.2.tar.gz`
 - `SHA256SUMS`
 
 In the directory containing both downloads:
 
 ```sh
 sha256sum --check --ignore-missing SHA256SUMS
-tar -xzf dls-neon-setup-0.5.1.tar.gz
-cd dls-neon-setup-0.5.1
+tar -xzf dls-neon-setup-0.5.2.tar.gz
+cd dls-neon-setup-0.5.2
 python3 dls-neon-setup
 ```
 
@@ -46,14 +46,38 @@ installations also need their native probe, path and syntax-check utilities.
 Have a verified independent backup and a boot-tested UEFI live USB before applying.
 The installer does not reboot; check the next real boot yourself.
 
+## Install with an AI agent
+
+Give this prompt to an agent with terminal access **on the computer to theme**:
+
+```text
+Help me install DreamLab Boot Themes from https://github.com/DreamLab-Solutions/dls-neon-grub.
+Read docs/AI-INSTALL.md. Inspect my active bootloader read-only, show the four
+themes, download the matching release and verify its checksum. Review the exact
+host plan and recovery readiness with me, then apply only after my explicit
+approval. Preserve all OS entries and the current bootloader. Never upload my
+inventory/backups, bypass guards or reboot automatically.
+```
+
+With Codex CLI already installed and signed in:
+
+```sh
+codex 'Help me install DreamLab Boot Themes from https://github.com/DreamLab-Solutions/dls-neon-grub. Read docs/AI-INSTALL.md, inspect first, show previews and the exact plan, and obtain my explicit approval before boot-file writes. Preserve all OS entries and never reboot automatically.'
+```
+
+The agent handles downloads, verification, inspection and approved installation.
+You still choose the theme, approve boot writes and verify your recovery media.
+See the [agent installation procedure](docs/AI-INSTALL.md) for the guarded CLI.
+
+
 ## Choose your package
 
 | Release asset | Who it is for |
 | --- | --- |
-| `dls-neon-setup-0.5.1.tar.gz` | Recommended: terminal chooser, all four themes and GRUB/Limine previews. |
-| `dls-neon-grub_0.5.1_all.deb` | Debian/Ubuntu GRUB users who prefer the manager CLI; package installation only stages files. |
-| `dls-neon-grub-0.5.1.tar.gz` | Portable GRUB manager and themes; manual CLI workflow. |
-| `dls-neon-limine-0.5.1.tar.gz` | Dedicated Limine manager, themes and backup helper; manual CLI workflow. |
+| `dls-neon-setup-0.5.2.tar.gz` | Recommended: terminal chooser, all four themes and GRUB/Limine previews. |
+| `dls-neon-grub_0.5.2_all.deb` | Debian/Ubuntu GRUB users who prefer the manager CLI; package installation only stages files. |
+| `dls-neon-grub-0.5.2.tar.gz` | Portable GRUB manager and themes; manual CLI workflow. |
+| `dls-neon-limine-0.5.2.tar.gz` | Dedicated Limine manager, themes and backup helper; manual CLI workflow. |
 | `SHA256SUMS` | SHA-256 checksums for all four downloadable packages. |
 
 The `.deb` and dedicated archives do not include the interactive chooser.
@@ -64,7 +88,7 @@ personal backup/configuration reports are not runtime downloads.
 
 This is a **preview release**. The repository is currently private, so release
 downloads require access to it. The packages are prepared for distribution;
-repository visibility and reference-material clearance are separate decisions.
+repository visibility and provider-side historical-reference review are separate decisions.
 
 ## Themes
 

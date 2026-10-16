@@ -6,13 +6,13 @@ They do not replace GRUB or add operating-system entries.
 
 ## Debian / Ubuntu
 
-Download `dls-neon-grub_0.5.1_all.deb` and `SHA256SUMS` from
-[Releases](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.1).
+Download `dls-neon-grub_0.5.2_all.deb` and `SHA256SUMS` from
+[Releases](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.2).
 Verify the checksum in the download directory, then install:
 
 ```sh
 sha256sum --check --ignore-missing SHA256SUMS
-sudo apt install ./dls-neon-grub_0.5.1_all.deb
+sudo apt install ./dls-neon-grub_0.5.2_all.deb
 dls-neon-theme install --theme synaptic-cosmos --dry-run
 ```
 
@@ -32,11 +32,11 @@ detects the layout automatically and is the recommended route if unsure.
 
 ## Portable GRUB archive
 
-Download and verify `dls-neon-grub-0.5.1.tar.gz`, extract it and enter its directory:
+Download and verify `dls-neon-grub-0.5.2.tar.gz`, extract it and enter its directory:
 
 ```sh
-tar -xzf dls-neon-grub-0.5.1.tar.gz
-cd dls-neon-grub-0.5.1
+tar -xzf dls-neon-grub-0.5.2.tar.gz
+cd dls-neon-grub-0.5.2
 ./install.sh --theme synaptic-cosmos --dry-run
 sudo ./install.sh --theme synaptic-cosmos --profile 1080p --timeout 8
 sudo python3 dls-neon-theme status

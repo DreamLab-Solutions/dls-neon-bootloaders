@@ -6,8 +6,8 @@ guide. Check [compatibility](COMPATIBILITY.md) before applying a theme.
 
 ## 1. Download and verify
 
-Open [Releases](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.1)
-and download `dls-neon-setup-0.5.1.tar.gz` and `SHA256SUMS` from **Assets**.
+Open [Releases](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.2)
+and download `dls-neon-setup-0.5.2.tar.gz` and `SHA256SUMS` from **Assets**.
 Do not use the automatic Source code download as an installer. While the
 repository is private, sign in with an account that has repository access.
 
@@ -15,17 +15,17 @@ From the download directory:
 
 ```sh
 sha256sum --check --ignore-missing SHA256SUMS
-tar -xzf dls-neon-setup-0.5.1.tar.gz
-cd dls-neon-setup-0.5.1
+tar -xzf dls-neon-setup-0.5.2.tar.gz
+cd dls-neon-setup-0.5.2
 python3 dls-neon-setup
 ```
 
-The checksum command must report `dls-neon-setup-0.5.1.tar.gz: OK`.
+The checksum command must report `dls-neon-setup-0.5.2.tar.gz: OK`.
 If you prefer GitHub CLI, download the same assets with:
 
 ```sh
-gh release download v0.5.1 --repo DreamLab-Solutions/dls-neon-grub \
-  --pattern 'dls-neon-setup-0.5.1.tar.gz' --pattern SHA256SUMS
+gh release download v0.5.2 --repo DreamLab-Solutions/dls-neon-grub \
+  --pattern 'dls-neon-setup-0.5.2.tar.gz' --pattern SHA256SUMS
 ```
 
 ## 2. Check prerequisites

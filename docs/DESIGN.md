@@ -19,14 +19,14 @@ The source artwork is 1672×941; scaling is not a new native 4K master.
 
 ## Artwork sources
 
-The original approved concept is preserved unmodified in `assets/reference`.
+The original concept is retained unmodified in a private archive outside Git.
 Event Horizon's runtime `assets/backgrounds/portal.png` was generated/edited
 with OpenAI image generation to remove simulated menu content; the recorded
 prompt remains in `artwork-prompt.txt`. The supplied concept itself is not
-covered by the runtime artwork grant and needs separate redistribution review.
+covered by the runtime artwork grant and is not distributed in this repository.
 
 The user selected proposals 2–4 for the package on 2026-10-16. Exact prompts,
-source revisions and image hashes are recorded in
+palette values and image hashes are recorded in
 [ai-artwork-provenance.json](ai-artwork-provenance.json). The original Limine
 screenshot was used as a layout reference. Runtime artwork pixels are copied
 without retouching; the installer adapts native appearance settings.
@@ -40,7 +40,8 @@ claimed. DreamLab marks remain reserved.
 
 The canonical repository is
 [DreamLab-Solutions/dls-neon-grub](https://github.com/DreamLab-Solutions/dls-neon-grub),
-transferred from Sunny-Pirate on 2026-10-16 with Git history and PRs preserved.
+maintained by DreamLab Solutions. Private design links and local host paths
+are excluded from publication history.
 It is an independent DreamLab product. It does not modify the DreamLab web
 platform, Sunnyday foundations or EzRider components. Durable cross-environment
 decisions are recorded through the shared Project Registry; source and detailed

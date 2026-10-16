@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.2 — 2026-10-16
+
+- Add agent-installation prompts and a Codex CLI command, with guarded plans,
+  explicit approval and honest reboot verification.
+- Remove original concept references and personal host context from publication
+  source; retain artwork, provenance, attribution and license grants.
+- Add tracked-file/image privacy checks, package validation and pinned Gitleaks CI.
+- Installer transactions, appearance and hardware qualification are unchanged.
+
 ## 0.5.1 — 2026-10-16
 
 - Make English the primary documentation language, with a release-download quick

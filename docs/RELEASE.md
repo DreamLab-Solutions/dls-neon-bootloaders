@@ -4,20 +4,20 @@ Releases are versioned downloads with English notes, four installable packages
 and one checksum file. CI artifacts are temporary build outputs; they are not
 the user-facing distribution channel.
 
-## Contents of v0.5.1
+## Contents of v0.5.2
 
 | Asset | Purpose |
 | --- | --- |
-| `dls-neon-setup-0.5.1.tar.gz` | Recommended combined console, all themes and native previews. |
-| `dls-neon-grub_0.5.1_all.deb` | Debian/Ubuntu GRUB manager; no automatic activation. |
-| `dls-neon-grub-0.5.1.tar.gz` | Portable GRUB manager and themes. |
-| `dls-neon-limine-0.5.1.tar.gz` | Dedicated Limine manager, themes and backup helper. |
+| `dls-neon-setup-0.5.2.tar.gz` | Recommended combined console, all themes and native previews. |
+| `dls-neon-grub_0.5.2_all.deb` | Debian/Ubuntu GRUB manager; no automatic activation. |
+| `dls-neon-grub-0.5.2.tar.gz` | Portable GRUB manager and themes. |
+| `dls-neon-limine-0.5.2.tar.gz` | Dedicated Limine manager, themes and backup helper. |
 | `SHA256SUMS` | Exact SHA-256 values for the four packages. |
 | `RELEASE-NOTES.md` | English notes and installation instructions, also used as the release body. |
 
 Runtime archives contain documentation, applicable licenses and referenced images.
 They exclude Docker images, developer containers, QEMU/OVMF/EFI executables,
-private configs/backups/photos and the original concept in `assets/reference`.
+private configs/backups/photos and privately archived original concept references.
 GitHub automatically adds Source code archives; those contain repository source
 and must not be presented as the ready-to-run installer.
 
@@ -39,13 +39,13 @@ and must not be presented as the ready-to-run installer.
 For a local reviewed build, the equivalent GitHub CLI command is:
 
 ```sh
-gh release create v0.5.1 dist/release/* \
+gh release create v0.5.2 dist/release/* \
   --repo DreamLab-Solutions/dls-neon-grub --target REVIEWED_COMMIT_SHA \
-  --draft --prerelease --title 'DreamLab Boot Themes v0.5.1 — preview' \
+  --draft --prerelease --title 'DreamLab Boot Themes v0.5.2 — preview' \
   --notes-file dist/release/RELEASE-NOTES.md
 ```
 
-Publish a reviewed draft with `gh release edit v0.5.1 --draft=false`.
+Publish a reviewed draft with `gh release edit v0.5.2 --draft=false`.
 Read the release back, download every attached asset and compare its checksum
 with the staged release before reporting completion.
 
@@ -56,11 +56,12 @@ creating a release does not make the repository or downloads public. The user
 requested release packaging and documentation; a visibility change is separate.
 
 Code/documentation is MIT, runtime artwork is CC BY 4.0 where applicable, DejaVu
-has its own license and DreamLab marks are reserved. The original concept
-reference is excluded from runtime packages and the artwork grant. Its
-redistribution clearance must be resolved before making this repository public,
-including the automatically distributed source history. Do not solve that by
-silently rewriting history or changing license grants.
+has its own license and DreamLab marks are reserved. Original concept references are privately archived outside Git and excluded from
+the artwork grant. Check every branch/tag, source archive, release package and
+provider-managed PR reference/cache before publication. A rewrite or force-push
+alone does not prove GitHub has expunged old data. Keep visibility private until
+provider-side exposure is resolved. Never silently replace published assets or
+remove license attribution to satisfy a scan. See GitHub's [removal procedure](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository).
 
 Before calling a release hardware-qualified, complete the applicable real boot,
 restart/cold boot, desktop return, displays and restore/recovery checks and record
