@@ -1,0 +1,34 @@
+Sessione reale del pacchetto in contenitore senza EFI. Scelta/anteprima continuano; nessuna applicazione. Percorsi resi relativi.
+
+DreamLab · Temi di avvio · console interattiva
+Windows, macOS, Linux e voci personalizzate già presenti restano della distribuzione.
+Sfogliare e aprire le anteprime non richiede sudo. q esce senza modifiche.
+
+1 Event Horizon  |  2 Quantum Fabric  |  3 Sentient Atlas  |  4 Synaptic Cosmos *
+Anteprima: LIMINE · p apri immagine · b cambia anteprima GRUB/Limine
+d rileva bootloader · v verifica piano · o profilo/attesa GRUB · a applica · r ripristina · q esci
+Scelta: Operazione non eseguita: Avvio UEFI non verificabile: anteprime disponibili, applicazione da Linux UEFI con GRUB o Limine
+Puoi continuare a scegliere/aprire anteprime oppure uscire.
+
+1 Event Horizon  |  2 Quantum Fabric  |  3 Sentient Atlas  |  4 Synaptic Cosmos *
+Anteprima: LIMINE · p apri immagine · b cambia anteprima GRUB/Limine
+d rileva bootloader · v verifica piano · o profilo/attesa GRUB · a applica · r ripristina · q esci
+Scelta: 
+1 Event Horizon  |  2 Quantum Fabric *  |  3 Sentient Atlas  |  4 Synaptic Cosmos
+Anteprima: LIMINE · p apri immagine · b cambia anteprima GRUB/Limine
+d rileva bootloader · v verifica piano · o profilo/attesa GRUB · a applica · r ripristina · q esci
+Scelta: Anteprima: ./previews/limine/quantum-fabric.png
+
+1 Event Horizon  |  2 Quantum Fabric *  |  3 Sentient Atlas  |  4 Synaptic Cosmos
+Anteprima: LIMINE · p apri immagine · b cambia anteprima GRUB/Limine
+d rileva bootloader · v verifica piano · o profilo/attesa GRUB · a applica · r ripristina · q esci
+Scelta: 
+1 Event Horizon  |  2 Quantum Fabric *  |  3 Sentient Atlas  |  4 Synaptic Cosmos
+Anteprima: GRUB · p apri immagine · b cambia anteprima GRUB/Limine
+d rileva bootloader · v verifica piano · o profilo/attesa GRUB · a applica · r ripristina · q esci
+Scelta: Anteprima: ./previews/grub/quantum-fabric.png
+
+1 Event Horizon  |  2 Quantum Fabric *  |  3 Sentient Atlas  |  4 Synaptic Cosmos
+Anteprima: GRUB · p apri immagine · b cambia anteprima GRUB/Limine
+d rileva bootloader · v verifica piano · o profilo/attesa GRUB · a applica · r ripristina · q esci
+Scelta: 

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Transactional Ubuntu/Debian GRUB theme activation. Standard library only."""
+"""Appearance-only GRUB activation preserving every original config byte."""
 import argparse
 from contextlib import contextmanager
 from datetime import datetime, timezone
-import difflib
 import fcntl
 import hashlib
 import json
@@ -55,6 +54,14 @@ def atomic_copy(source, destination):
 
 def boot_entries(text):
     return re.findall(r"^[ \t]*(?:menuentry|submenu)[ \t]+(.+?)[ \t]+\{[ \t]*$", text, re.MULTILINE)
+
+
+def has_bls_menu(text):
+    return bool(re.search(r'^\s*blscfg(?:\s|;|$)',text,re.M))
+
+
+def has_native_menu(text):
+    return bool(boot_entries(text) or has_bls_menu(text))
 
 
 def entry_headers(text):
@@ -133,146 +140,146 @@ def compatible_boot_entries(before, after):
         return False
 
 
+HOOK = 'etc/grub.d/99_dls_neon_theme'
+CONFIGS = ('boot/grub/grub.cfg', 'boot/grub2/grub.cfg')
+BEGIN = '# BEGIN DLS NEON GRUB\n'
+END = '# END DLS NEON GRUB\n'
+
+
+def appearance_commands(prefix, profile, timeout, fonts):
+    """Native commands only; deliberately contains no OS entries or boot commands."""
+    if profile not in GFX or not 1 <= timeout <= 60:
+        raise RuntimeError('Invalid appearance settings')
+    if not re.fullmatch(r'\(\$(?:root|dls_theme_root)\)/[A-Za-z0-9_./@+-]+', prefix):
+        raise RuntimeError('Unsupported GRUB asset path')
+    if any(not re.fullmatch(r'dejavu-[0-9]+\.pf2', name) for name in fonts):
+        raise RuntimeError('Unexpected font name')
+    commands = ['terminal_output console', 'insmod all_video', 'insmod gfxterm', 'insmod gfxmenu', 'insmod png',
+                f'set gfxmode={GFX[profile]},1280x720,1024x768,auto']
+    commands += [f'loadfont "{prefix}/{name}"' for name in fonts]
+    commands += ['set gfxterm_font="DejaVu Sans Mono Regular 14"',
+                 'terminal_output gfxterm', f'set theme="{prefix}/theme-{profile}.txt"',
+                 'export theme', 'set timeout_style=menu', f'set timeout={timeout}']
+    return '\n'.join(commands) + '\n'
+
+
 class Manager:
-    # root and runner are injectable for isolated transaction tests, not exposed by CLI.
-    def __init__(self, root=Path("/"), runner=subprocess.run):
-        self.root = Path(root)
-        self.run = runner
+    # root/runner are for isolated transaction tests, never exposed by CLI.
+    def __init__(self, root=Path('/'), runner=subprocess.run, config=CONFIG, tools=None):
+        if config not in CONFIGS:
+            raise RuntimeError('Unsupported GRUB configuration path')
+        self.root, self.run, self.config = Path(root), runner, config
+        self.tools = tools or {'check':'grub-script-check', 'probe':'grub-probe', 'relpath':'grub-mkrelpath'}
 
     def p(self, relative):
         path = self.root / relative
         if path.is_symlink() or any(p.is_symlink() for p in path.parents if p != self.root):
-            raise RuntimeError(f"Refusing symlink in system path: {path}")
+            raise RuntimeError(f'Refusing symlink in system path: {path}')
         return path
 
     @contextmanager
     def locked(self):
-        state = self.p(STATE)
-        state.mkdir(parents=True, exist_ok=True, mode=0o700)
-        with self.p(STATE + "/lock").open("w") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        state = self.p(STATE);state.mkdir(parents=True,exist_ok=True,mode=0o700)
+        with self.p(STATE+'/lock').open('w') as lock:
+            fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
             yield
 
     def install(self, source, profile, timeout, expected_config=None):
         verify_assets(source)
-        cfg, dropin = self.p(CONFIG), self.p(DROPIN)
-        if not cfg.is_file() or not self.p("etc/default/grub").is_file():
-            raise RuntimeError("Expected Ubuntu/Debian GRUB paths were not found")
-        if not boot_entries(cfg.read_text()):
-            raise RuntimeError("Current GRUB configuration has no boot entries")
-        if dropin.exists():
-            raise RuntimeError("An activation already exists; restore it before installing again")
-        if self.p(STATE + "/active.json").exists():
-            raise RuntimeError("An active or interrupted transaction exists; inspect status first")
+        cfg, hook = self.p(self.config), self.p(HOOK)
+        before = cfg.read_bytes()
+        if not has_native_menu(before.decode()) or BEGIN.encode() in before:
+            raise RuntimeError('No native entries, or appearance is already managed')
+        if not hook.parent.is_dir():
+            raise RuntimeError('Expected /etc/grub.d generator directory')
+        if hook.exists() or self.p(DROPIN).exists():
+            raise RuntimeError('An activation already exists; restore it first')
         with self.locked():
-            # Recheck after acquiring the lock.
-            if dropin.exists() or self.p(STATE + "/active.json").exists():
-                raise RuntimeError("An activation already exists")
-            if expected_config is not None and digest(cfg) != expected_config:
-                raise RuntimeError("Reviewed GRUB configuration changed; make a new plan")
-            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-            asset_id = hashlib.sha256((source / "manifest.json").read_bytes()).hexdigest()[:12]
-            theme_rel = f"boot/grub/themes/{NAME}-{asset_id}-{stamp}"
-            target = self.p(theme_rel)
-            if target.exists():
-                raise RuntimeError(f"Preserving existing directory: {target}")
-            backup = self.p(STATE + "/backups/" + stamp)
-            backup.mkdir(parents=True, mode=0o700)
-            shutil.copy2(cfg, backup / "grub.cfg")
-            shutil.copy2(self.p("etc/default/grub"), backup / "grub-defaults.reference")
-            if dropin.parent.exists():
-                shutil.copytree(dropin.parent, backup / "grub.d.reference")
-            record = {"backup": str(backup.relative_to(self.root)), "theme": theme_rel,
-                      "profile": profile, "timeout": timeout, "status": "preparing",
-                      "config_before": digest(cfg), "theme_hashes": tree_digest(source)}
-            (backup / "transaction.json").write_text(json.dumps(record, indent=2) + "\n")
-            active = self.p(STATE + "/active.json")
-            active.write_text(json.dumps(record, indent=2) + "\n")
-            staged = None
+            active = self.p(STATE+'/active.json')
+            if active.exists() or hook.exists() or self.p(DROPIN).exists():
+                raise RuntimeError('An active or interrupted transaction already exists')
+            baseline = hashlib.sha256(before).hexdigest()
+            if digest(cfg) != baseline or (expected_config is not None and expected_config != baseline):
+                raise RuntimeError('Reviewed GRUB configuration changed; make a new plan')
+            stamp=datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
+            key=hashlib.sha256((source/'manifest.json').read_bytes()).hexdigest()[:12]
+            theme_rel=f'{Path(self.config).parent}/themes/{NAME}-{key}-{stamp}'
+            target=self.p(theme_rel)
+            if target.exists():raise RuntimeError('Preserving existing theme directory')
+            backup=self.p(STATE+'/backups/'+stamp);backup.mkdir(parents=True,mode=0o700)
+            (backup/'grub.cfg').write_bytes(before)
+            shutil.copystat(cfg,backup/'grub.cfg')
+            if digest(backup/'grub.cfg') != baseline:raise RuntimeError('Backup checksum mismatch')
+            record={'backup':str(backup.relative_to(self.root)),'theme':theme_rel,
+                    'profile':profile,'timeout':timeout,'status':'preparing','config':self.config,
+                    'hook':HOOK,'config_before':baseline,'theme_hashes':tree_digest(source),
+                    'mode':'appearance-only; all original configuration bytes retained'}
+            active.write_text(json.dumps(record,indent=2)+'\n')
+            staged=None
             try:
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copytree(source, target)
-                verify_assets(target)
-                dropin.parent.mkdir(parents=True, exist_ok=True)
-                # Let GRUB choose a supported fallback without altering kernel gfxpayload.
-                dropin.write_text(
-                    "# Managed by dls-neon-grub; restore with dls-neon-theme restore\n"
-                    f"GRUB_THEME=/{theme_rel}/theme-{profile}.txt\n"
-                    "GRUB_TIMEOUT_STYLE=menu\n"
-                    f"GRUB_TIMEOUT={timeout}\n"
-                    f"GRUB_GFXMODE={GFX[profile]},1280x720,1024x768,auto\n"
-                    "GRUB_TERMINAL_OUTPUT=gfxterm\n")
-                os.chmod(dropin, 0o644)
-                fd, staged_name = tempfile.mkstemp(prefix=".dls-neon-candidate-", dir=cfg.parent)
-                os.close(fd)
-                staged = Path(staged_name)
-                self.run(["grub-mkconfig", "-o", str(staged)], check=True)
-                self.run(["grub-script-check", str(staged)], check=True)
-                text = staged.read_text()
-                if f"/{theme_rel}/theme-{profile}.txt" not in text or "insmod gfxmenu" not in text:
-                    raise RuntimeError("Generated configuration did not activate the theme")
-                if not compatible_boot_entries((backup / "grub.cfg").read_text(), text):
-                    shutil.copy2(staged, backup / "candidate-grub.cfg")
-                    differences = "\n".join(difflib.unified_diff(
-                        (backup / "grub.cfg").read_text().splitlines(), text.splitlines(),
-                        fromfile="active grub.cfg", tofile="generated grub.cfg", lineterm=""))
-                    (backup / "boot-entry-changes.diff").write_text(differences + "\n")
-                    raise RuntimeError(
-                        "Boot entries changed during generation; active configuration kept intact.\n"
-                        f"{differences}\nReview saved candidate: {backup / 'candidate-grub.cfg'}")
-                if digest(cfg) != record["config_before"]:
-                    raise RuntimeError("GRUB configuration changed concurrently; preserving it")
-                # Preserve access mode, then publish only the validated configuration.
-                os.chmod(staged, cfg.stat().st_mode & 0o777)
-                record.update(status="active", config_after=digest(staged), dropin_hash=digest(dropin))
-                (backup / "transaction.json").write_text(json.dumps(record, indent=2) + "\n")
-                active.write_text(json.dumps(record, indent=2) + "\n")
-                os.replace(staged, cfg)
+                target.parent.mkdir(parents=True,exist_ok=True);shutil.copytree(source,target);verify_assets(target)
+                uuid=self.run([self.tools['probe'],'--target=fs_uuid',str(target)],check=True,capture_output=True,text=True).stdout.strip()
+                relpath=self.run([self.tools['relpath'],str(target)],check=True,capture_output=True,text=True).stdout.strip()
+                if not re.fullmatch(r'[0-9A-Fa-f-]+',uuid) or not relpath.startswith('/'):
+                    raise RuntimeError('Cannot qualify filesystem UUID and GRUB-relative asset path')
+                commands=appearance_commands('($dls_theme_root)'+relpath,profile,timeout,sorted(p.name for p in target.glob('*.pf2')))
+                block=BEGIN+f'if search --no-floppy --fs-uuid --set=dls_theme_root {uuid}; then\n'+commands+'fi\n'+END
+                hook.write_text("#!/bin/sh\n# DLS appearance only; no discovery or OS entries.\ncat <<'DLS_NEON_EOF'\n"+block+'DLS_NEON_EOF\n')
+                os.chmod(hook,0o755)
+                fd,name=tempfile.mkstemp(prefix='.dls-neon-candidate-',dir=cfg.parent)
+                with os.fdopen(fd,'wb') as stream:
+                    stream.write(before + (b'' if before.endswith(b'\n') else b'\n') + block.encode())
+                    stream.flush();os.fsync(stream.fileno())
+                staged=Path(name)
+                self.run([self.tools['check'],str(staged)],check=True)
+                candidate=staged.read_bytes()
+                if not candidate.startswith(before) or candidate[len(before):].count(BEGIN.encode()) != 1:
+                    raise RuntimeError('Original GRUB bytes changed; refusing activation')
+                if digest(cfg) != baseline:
+                    raise RuntimeError('GRUB configuration changed concurrently; preserving it')
+                os.chmod(staged,cfg.stat().st_mode & 0o777)
+                record.update(status='active',config_after=digest(staged),hook_hash=digest(hook))
+                (backup/'transaction.json').write_text(json.dumps(record,indent=2)+'\n')
+                active.write_text(json.dumps(record,indent=2)+'\n')
+                os.replace(staged,cfg)
                 return record
             except BaseException as error:
-                # The live config is replaced only at the end, so generation errors keep it intact.
-                dropin.unlink(missing_ok=True)
-                if target.exists():
-                    shutil.rmtree(target)
+                hook.unlink(missing_ok=True)
+                if target.exists():shutil.rmtree(target)
                 active.unlink(missing_ok=True)
-                record.update(status="aborted", error=str(error), config_unchanged=digest(cfg) == record["config_before"])
-                (backup / "transaction.json").write_text(json.dumps(record, indent=2) + "\n")
+                record.update(status='aborted',error=str(error),config_unchanged=digest(cfg)==baseline)
+                (backup/'transaction.json').write_text(json.dumps(record,indent=2)+'\n')
                 raise
             finally:
-                if staged:
-                    staged.unlink(missing_ok=True)
-                    Path(str(staged) + ".new").unlink(missing_ok=True)
+                if staged:staged.unlink(missing_ok=True)
 
     def restore(self):
         with self.locked():
-            active = self.p(STATE + "/active.json")
-            if not active.is_file():
-                raise RuntimeError("No active DLS Neon installation")
-            record = json.loads(active.read_text())
-            if record["status"] != "active":
-                raise RuntimeError("Interrupted activation: inspect retained backup before manual recovery")
-            cfg, dropin = self.p(CONFIG), self.p(DROPIN)
-            theme = self.p(record["theme"])
-            backup = self.p(record["backup"])
-            if digest(cfg) != record["config_after"] or digest(dropin) != record["dropin_hash"]:
-                raise RuntimeError("GRUB changed after activation; automatic restore would overwrite later work. See docs/RECOVERY.md")
-            if tree_digest(theme) != record["theme_hashes"]:
-                raise RuntimeError("Installed theme changed; refusing to delete it")
-            if digest(backup / "grub.cfg") != record["config_before"]:
-                raise RuntimeError("Backup checksum mismatch")
-            self.run(["grub-script-check", str(backup / "grub.cfg")], check=True)
-            # Removing our drop-in leaves distro defaults untouched. Retain assets and backups.
-            dropin.unlink()
-            try:
-                atomic_copy(backup / "grub.cfg", cfg)
+            active=self.p(STATE+'/active.json')
+            if not active.is_file():raise RuntimeError('No active DLS Neon installation')
+            record=json.loads(active.read_text())
+            if record['status']!='active':raise RuntimeError('Interrupted activation: inspect retained backup before manual recovery')
+            config=record.get('config',CONFIG)
+            if config not in CONFIGS:raise RuntimeError('Invalid saved configuration path')
+            cfg=self.p(config)
+            managed=HOOK if 'hook' in record else DROPIN
+            if 'hook' in record and record['hook']!=HOOK:raise RuntimeError('Invalid saved hook path')
+            control=self.p(managed)
+            theme_name=record['theme'];backup_name=record['backup']
+            if not re.fullmatch(r'boot/grub2?/themes/dls-neon-[A-Za-z0-9-]+',theme_name) or not re.fullmatch(r'var/lib/dls-neon-grub/backups/[A-Za-z0-9]+',backup_name):
+                raise RuntimeError('Invalid saved state paths')
+            theme,backup=self.p(theme_name),self.p(backup_name)
+            expected=record['hook_hash'] if 'hook' in record else record['dropin_hash']
+            if digest(cfg)!=record['config_after'] or digest(control)!=expected:
+                raise RuntimeError('GRUB changed after activation; automatic restore would overwrite later work. See docs/RECOVERY.md')
+            if tree_digest(theme)!=record['theme_hashes']:raise RuntimeError('Installed theme changed; refusing to delete it')
+            if digest(backup/'grub.cfg')!=record['config_before']:raise RuntimeError('Backup checksum mismatch')
+            self.run([self.tools['check'],str(backup/'grub.cfg')],check=True)
+            control.unlink()
+            try:atomic_copy(backup/'grub.cfg',cfg)
             except BaseException:
-                # Leave an explicit record; the active config still points at retained assets.
-                record["status"] = "restore-interrupted"
-                active.write_text(json.dumps(record, indent=2) + "\n")
-                raise
-            record["status"] = "restored"
-            (backup / "transaction.json").write_text(json.dumps(record, indent=2) + "\n")
-            active.unlink()
+                record['status']='restore-interrupted';active.write_text(json.dumps(record)+'\n');raise
+            record['status']='restored';(backup/'transaction.json').write_text(json.dumps(record,indent=2)+'\n');active.unlink()
             return record
 
 
@@ -285,6 +292,7 @@ def main():
     install.add_argument("--profile", choices=GFX, default="1080p")
     install.add_argument("--timeout", type=int, default=8)
     install.add_argument("--dry-run", action="store_true")
+    install.add_argument("--config", choices=CONFIGS, default=CONFIG)
     sub.add_parser("restore", help="Restore the exact pre-install configuration if unchanged")
     sub.add_parser("status")
     args = parser.parse_args()
@@ -299,14 +307,15 @@ def main():
             if args.dry_run:
                 print(json.dumps({"action": "preview-only", "assets": str(args.source),
                     "profile": args.profile, "gfxmode": GFX[args.profile], "timeout": args.timeout,
-                    "writes": ["/boot/grub/themes/dls-neon-<asset-hash>", "/" + DROPIN,
-                               "/" + CONFIG, "/" + STATE],
+                    "writes": ["/boot/grub/themes/dls-neon-<asset-hash>", "/" + HOOK,
+                               "/" + args.config, "/" + STATE],
                     "preserves": ["distribution boot entries", "EFI files and NVRAM", "/etc/default/grub"],
                     "reboot": False}, indent=2))
                 return
         if os.geteuid() != 0:
             parser.error("run this action with sudo; install --dry-run does not need sudo")
-        manager = Manager()
+        commands = {k: (shutil.which(v) or shutil.which(v.replace("grub-", "grub2-")) or v) for k,v in {"check":"grub-script-check","probe":"grub-probe","relpath":"grub-mkrelpath"}.items()}
+        manager = Manager(config=getattr(args,"config",CONFIG), tools=commands)
         if args.action == "install":
             result = manager.install(args.source, args.profile, args.timeout)
         elif args.action == "restore":

@@ -8,11 +8,6 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-try:
-    import tkinter as tk
-except ImportError:
-    tk = None
-
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location('setup', ROOT/'scripts/dls_setup.py')
 s = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(s)
@@ -76,24 +71,18 @@ class Bundle(Fixture, unittest.TestCase):
         p=self.base/'grub_manager.py';p.unlink();p.symlink_to(self.base/'limine_manager.py')
         with self.assertRaisesRegex(RuntimeError,'collegamento'):s.verify_bundle(self.base)
 
-    def test_detection_does_not_infer_bootloader_from_files(self):
-        root=self.base/'root';(root/'etc').mkdir(parents=True)
-        for identity,expected in [('omarchy','limine'),('ubuntu','grub'),('debian','grub')]:
-            (root/'etc/os-release').write_text('ID="'+identity+'"\n')
-            self.assertEqual(s.detected_backend(root),expected)
-        (root/'etc/os-release').write_text('ID=fedora\nID_LIKE=ubuntu\n')
-        with self.assertRaisesRegex(RuntimeError,'non qualificato'):s.detected_backend(root)
+    def test_detection_uses_active_efi_instead_of_distribution(self):
+        root=self.base/'osroot';(root/'sys/firmware/efi').mkdir(parents=True)
+        for file,expected in [('\\EFI\\fedora\\shimx64.efi','grub'),('\\EFI\\custom\\grubx64.efi','grub'),('\\EFI\\limine\\limine_x64.efi','limine')]:
+            boot='BootCurrent: 0001\nBoot0001* Whatever HD(1,GPT,aaaa,0,1)/File('+file+')\n'
+            with patch.object(s.subprocess,'check_output',return_value=boot):
+                self.assertEqual(s.detected_backend(root),expected)
 
-    def test_standard_os_release_symlink_is_supported(self):
-        root=self.base/'osroot';(root/'etc').mkdir(parents=True);(root/'usr/lib').mkdir(parents=True)
-        (root/'usr/lib/os-release').write_text('ID=debian\n')
-        (root/'etc/os-release').symlink_to('../usr/lib/os-release')
-        self.assertEqual(s.detected_backend(root),'grub')
-
-    def test_os_release_cannot_redirect_elsewhere(self):
-        root=self.base/'osroot';(root/'etc').mkdir(parents=True)
-        (root/'elsewhere').write_text('ID=ubuntu\n');(root/'etc/os-release').symlink_to('../elsewhere')
-        with self.assertRaises((RuntimeError,OSError)):s.detected_backend(root)
+    def test_windows_native_loader_is_not_misidentified_as_grub(self):
+        root=self.base/'osroot';(root/'sys/firmware/efi').mkdir(parents=True)
+        boot='BootCurrent: 0001\nBoot0001* Windows HD(1,GPT,aaaa,0,1)/File(\\EFI\\Microsoft\\Boot\\bootmgfw.efi)\n'
+        with patch.object(s.subprocess,'check_output',return_value=boot):
+            with self.assertRaisesRegex(RuntimeError,'non è GRUB/Limine'):s.detected_backend(root)
 
     def test_plan_rejects_other_bootloader_before_manager(self):
         with patch.object(s,'detected_backend',return_value='limine'),patch.object(s,'load_manager') as load:
@@ -132,51 +121,91 @@ class Bundle(Fixture, unittest.TestCase):
         with patch.object(Path,'is_dir',return_value=True),patch.object(s.os,'uname',return_value=argparse.Namespace(machine='x86_64')),patch.object(s.subprocess,'check_output',side_effect=output):
             with self.assertRaisesRegex(RuntimeError,'non corrisponde'):s.grub_guard()
 
+    def test_grub_guard_accepts_other_linux_vendor_and_grub2_layout(self):
+        boot='BootCurrent: 0001\nBoot0001* Fedora HD(1,GPT,aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee,0,1)/File(\\EFI\\fedora\\shimx64.efi)\n'
+        def output(command,**kwargs):
+            if command[0]=='efibootmgr':return boot
+            if command[0]=='findmnt':return json.dumps({'filesystems':[{'fstype':'vfat','source':'/dev/fake','target':'/efi'}]})
+            return 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\n'
+        with patch.object(Path,'is_dir',return_value=True),patch.object(s.os,'uname',return_value=argparse.Namespace(machine='x86_64')),patch.object(s.subprocess,'check_output',side_effect=output),patch.object(s,'regular',return_value=b'efi'),patch.object(s.shutil,'which',side_effect=lambda name: '/usr/bin/'+name if name.startswith('grub2-') else None):
+            # Explicitly provide one unambiguous native configuration.
+            with patch.object(Path,'is_file',autospec=True,side_effect=lambda path: str(path)=='/boot/grub2/grub.cfg'):
+                info=s.grub_guard()
+            self.assertEqual(info['config'],'boot/grub2/grub.cfg')
+            self.assertTrue(info['tools']['check'].endswith('grub2-script-check'))
+
     def test_grub_guard_rejects_active_limine(self):
         with patch.object(Path,'is_dir',return_value=True),patch.object(s.os,'uname',return_value=argparse.Namespace(machine='x86_64')),patch.object(s.subprocess,'check_output',return_value='BootCurrent: 0001\nBoot0001* Limine HD(1,GPT,abc,0,1)/File(\\EFI\\limine\\limine_x64.efi)\n'):
-            with self.assertRaisesRegex(RuntimeError,'non identifica'):s.grub_guard()
+            with self.assertRaisesRegex(RuntimeError,'GRUB attivo'):s.grub_guard()
 
 
-@unittest.skipUnless(os.environ.get('DISPLAY') and tk is not None,'Tk UI requires Tk and an isolated display')
-class Gui(Fixture, unittest.TestCase):
-    def setUp(self):
-        super().setUp()
-        import tkinter as tk
-        self.window=tk.Tk()
-        with patch.object(s,'detected_backend',return_value='limine'):
-            self.ui=s.Wizard(self.window,self.base)
-        self.window.update()
+class ConsoleTests(Fixture,unittest.TestCase):
+    def scripted(self, answers, execute=None):
+        lines=[];previews=[];iterator=iter(answers)
+        reader=lambda prompt: next(iterator)
+        run=execute or Mock(side_effect=AssertionError('Unexpected privileged action'))
+        ui=s.Console(self.base,read=reader,write=lines.append,execute=run,preview=previews.append)
+        ui.run();return ui,run,lines,previews
 
-    def tearDown(self):
-        self.ui.close();super().tearDown()
+    def reviewer(self,action,extra=()):
+        if action=='detect':return {'backend':'grub'}
+        if action=='plan':return {'backend':'grub','title':'Synaptic Cosmos','config_path':'boot/grub2/grub.cfg','entries':['Windows Boot Manager','macOS','Fedora','Custom rescue'],'reason':'','can_apply':True,'can_restore':True,'review_sha256':'reviewed'}
+        return {'result':'Completed in fixture'}
 
-    def test_apply_needs_plan_and_recovery(self):
-        self.assertEqual(str(self.ui.apply['state']),'disabled')
-        self.ui.review={'can_apply':True,'can_restore':False,'review_sha256':'abc'};self.ui.buttons()
-        self.assertEqual(str(self.ui.apply['state']),'disabled')
-        self.ui.recovery.set(True);self.ui.buttons()
-        self.assertEqual(str(self.ui.apply['state']),'normal')
-        self.ui.theme.set('sentient-atlas');self.ui.change()
-        self.assertIsNone(self.ui.review)
-        self.assertEqual(str(self.ui.apply['state']),'disabled')
+    def test_browsing_and_preview_never_request_privileges(self):
+        ui,run,lines,previews=self.scripted(['2','p','b','p','q'])
+        run.assert_not_called();self.assertEqual(len(previews),2)
+        self.assertIn('quantum-fabric.png',str(previews[0]));self.assertNotEqual(previews[0],previews[1])
 
-    def test_preview_can_change_without_changing_install_target(self):
-        self.ui.preview_backend.set('grub');self.ui.show_preview()
-        self.assertEqual(self.ui.backend,'limine')
-        self.assertIn('GRUB',self.ui.caption['text'])
-        self.assertGreater(self.ui.image.width(),0)
+    def test_plan_lists_every_os_without_filtering(self):
+        run=Mock(side_effect=self.reviewer)
+        _,_,lines,_=self.scripted(['v','q'],run)
+        rendered='\n'.join(lines)
+        import test_transactions as tx
+        actual=s.menu_titles(tx.m,"blscfg --entry linux\nmenuentry 'Windows' {\n true\n}\n")
+        self.assertIn('Windows',actual)
+        self.assertTrue(any(title.startswith('BLS:') for title in actual))
+        for name in ['Windows Boot Manager','macOS','Fedora','Custom rescue']:self.assertIn(name,rendered)
+        self.assertEqual([c.args[0] for c in run.call_args_list],['detect','plan'])
 
-    def test_cancel_does_not_start_privileged_operation(self):
-        self.ui.review={'title':'Synaptic Cosmos'};self.ui.recovery.set(True)
-        with patch.object(self.ui.messagebox,'askyesno',return_value=False),patch.object(self.ui,'start') as start:
-            self.ui.confirm('apply');start.assert_not_called()
+    def test_apply_without_plan_is_not_executed(self):
+        _,run,_,_=self.scripted(['a','q']);run.assert_not_called()
 
-    def test_authentication_command_is_fixed_and_review_bound(self):
-        self.ui.review={'review_sha256':'abc'}
-        cmd=self.ui.execute('apply')
-        self.assertEqual(cmd[:2],['pkexec','/usr/bin/python3'])
-        self.assertIn('--approve-boot-write',cmd)
-        self.assertEqual(cmd[-2:],['--expected-review','abc'])
+    def test_recovery_refusal_cancels_write(self):
+        run=Mock(side_effect=self.reviewer)
+        self.scripted(['v','a','n','q'],run)
+        self.assertEqual([c.args[0] for c in run.call_args_list],['detect','plan'])
+
+    def test_exact_final_confirmation_required(self):
+        run=Mock(side_effect=self.reviewer)
+        self.scripted(['v','a','s','yes','q'],run)
+        self.assertEqual([c.args[0] for c in run.call_args_list],['detect','plan'])
+
+    def test_review_and_approval_bound_to_apply(self):
+        run=Mock(side_effect=self.reviewer)
+        ui,_,_,_=self.scripted(['v','a','s','APPLICA','q'],run)
+        self.assertEqual(run.call_args_list[-1].args,('apply',['--approve-boot-write','--recovery-confirmed','--expected-review','reviewed']))
+        self.assertIsNone(ui.review)
+
+    def test_theme_change_invalidates_review(self):
+        run=Mock(side_effect=self.reviewer)
+        ui,_,_,_=self.scripted(['v','2','a','q'],run)
+        self.assertIsNone(ui.review)
+        self.assertEqual([c.args[0] for c in run.call_args_list],['detect','plan'])
+
+    def test_detection_failure_does_not_end_browsing(self):
+        run=Mock(side_effect=RuntimeError('Unsupported active loader'))
+        _,_,lines,previews=self.scripted(['d','3','p','q'],run)
+        self.assertEqual(len(previews),1);self.assertIn('Puoi continuare','\n'.join(lines))
+
+    def test_restore_requires_its_own_confirmation(self):
+        run=Mock(side_effect=self.reviewer)
+        self.scripted(['v','r','s','APPLICA','r','s','RIPRISTINA','q'],run)
+        self.assertEqual([c.args[0] for c in run.call_args_list],['detect','plan','restore'])
+
+    def test_invalid_settings_preserve_previous_values(self):
+        ui,run,_,_=self.scripted(['o','4k','999','q'])
+        self.assertEqual((ui.profile,ui.timeout),('1080p',8));run.assert_not_called()
 
 
 if __name__=='__main__':unittest.main()

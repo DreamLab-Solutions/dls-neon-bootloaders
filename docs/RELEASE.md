@@ -1,3 +1,18 @@
+# Current state — 0.5.0
+
+The user requested console interaction and preservation of mixed OS menus.
+The Tk frontend is replaced; GRUB activation no longer regenerates OS entries,
+and Limine keeps every entry byte. Technical EFI/layout/hash guards replace the
+distribution-name gate. Standard grub/grub2 layouts and BLS source preservation
+are covered by isolated tests, not universal physical certification.
+
+The real laptop remains on the previously qualified Synaptic Cosmos appearance;
+this update was not reapplied to its boot files. Windows/macOS kernel boot and
+physical GRUB/other-distro qualification remain unverified. Public visibility,
+reference clearance and release approval remain separate from private code work.
+
+The following sections record historical qualification and merge decisions.
+
 # Current state — 0.4.0
 
 The user approved completing the guided selector and merging private PR #1.

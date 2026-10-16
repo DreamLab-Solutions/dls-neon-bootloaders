@@ -1,0 +1,22 @@
+{
+  "theme": "event-horizon",
+  "profile": "1080p",
+  "theme_manifest_sha256": "1c8c5801b715a2055797cfbc88b5acc223c75d0b178ed657f25da923d8349eff",
+  "resolution": "1920x1080",
+  "scope": "Real GRUB UEFI menu, selection, submenu, console and scrolling; demo paths; no kernel boot",
+  "screenshots": {
+    "01-menu.png": "92a5f9dc7d9dfbc733e1463fb612cfdd110817ebd5812d0ddbba1f4a16ab66a9",
+    "02-selected.png": "a029fd14f9b3588ca29cb60b708a3200714adbf0dd757c52ae490da034e5186c",
+    "03-submenu.png": "677459ba231f97ccfaa3669853ce19958420fc936039b53365d46c21c7bfec1a",
+    "04-console.png": "5f15b2f3314eccb39ba4ba90b516f0c702d4ec7dc2550daccee6e23e3c9a8df8",
+    "05-scrolling.png": "650cb492a5c0e9a1dc81de7e82bb4823388efe3c1212760f71c662aa74b76c06"
+  },
+  "screenshot_files": {
+    "01-menu.png": "grub-1080p.png",
+    "02-selected.png": "grub-1080p-selected.png",
+    "03-submenu.png": "grub-1080p-submenu.png",
+    "04-console.png": "grub-1080p-console.png",
+    "05-scrolling.png": "grub-1080p-scrolling.png"
+  },
+  "appearance_mode": "native appearance commands appended after multiboot demo entries; no OS kernel boot"
+}

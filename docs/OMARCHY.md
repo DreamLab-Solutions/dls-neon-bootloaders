@@ -1,3 +1,16 @@
+# 0.5.0 console and distribution-independent Limine qualification
+
+For the combined package use [INSTALLER.md](INSTALLER.md). Tk/Polkit is no longer
+required. Qualification is based on the exact EFI path/binary, UEFI x86-64, writable
+FAT ESP and Secure Boot guards, rather than the distro ID, pacman package or UEFI
+label. Existing Windows/macOS/Linux/custom entries remain byte-identical. Native
+Windows Boot Manager/Apple loaders and other Limine builds are not converted.
+
+The guide below documents the original Omarchy target and existing manager CLI.
+Its Omarchy-only restriction describes the initial qualification, superseded by
+the technical checks above; all backup, approval and conservative restore rules
+remain applicable.
+
 # DreamLab AI universe themes for Omarchy / Limine — 0.4.0
 
 This is a native Limine appearance adapter. It keeps the GRUB implementation

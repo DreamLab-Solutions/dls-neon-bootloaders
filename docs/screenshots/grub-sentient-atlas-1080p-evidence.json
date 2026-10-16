@@ -5,8 +5,8 @@
   "resolution": "1920x1080",
   "scope": "Real GRUB UEFI menu, selection, submenu, console and scrolling; demo paths; no kernel boot",
   "screenshots": {
-    "01-menu.png": "9b6b5ce6f8b72595642d1cba4fc89b179beecc428fe3bbfe88a95a69cfb915f4",
-    "02-selected.png": "ecc1d5ca92879f1abed231a3fe4f05364182174d3a0912624a3869083d74d08a",
+    "01-menu.png": "36f832baabf790ef8fa341083de1d7c3353c738bbf82e70cadebe8d189573daf",
+    "02-selected.png": "45968627e30052a43755ae13bc7b776d31ae56ada46f25781023c9bd7df1cfb8",
     "03-submenu.png": "f421d4afe55edda8842143be5994ac0b4eb8493e278760913ca9714241525c36",
     "04-console.png": "8f42332fd3a05755847e4b962a3603ff2ca6dbf700583d32103e59b791befabe",
     "05-scrolling.png": "fedb457f2a2d0044c9bf3761b5c878bfd1f199ed031652d90d6162e55d23c281"
@@ -17,5 +17,6 @@
     "03-submenu.png": "grub-sentient-atlas-1080p-submenu.png",
     "04-console.png": "grub-sentient-atlas-1080p-console.png",
     "05-scrolling.png": "grub-sentient-atlas-1080p-scrolling.png"
-  }
+  },
+  "appearance_mode": "native appearance commands appended after multiboot demo entries; no OS kernel boot"
 }

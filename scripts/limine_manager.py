@@ -240,25 +240,21 @@ class Manager:
 
 
 def host_guard():
-    release = Path('/etc/os-release').read_text()
-    if not re.search(r'^ID=[\"\']?omarchy[\"\']?$', release, re.M) or os.uname().machine != 'x86_64':
-        raise RuntimeError('This adapter is qualified only for x86-64 Omarchy')
+    if os.uname().machine != 'x86_64':
+        raise RuntimeError('This adapter is qualified only for x86-64')
     if os.geteuid() != 0:
         raise RuntimeError('Activation/restore requires root; dry-run does not')
     if not Path('/sys/firmware/efi').is_dir():
         raise RuntimeError('This adapter supports UEFI only')
     result = subprocess.run(['efibootmgr', '-v'], check=True, capture_output=True, text=True).stdout
     current = re.search(r'^BootCurrent: ([0-9A-Fa-f]{4})$', result, re.M)
-    if not current or not re.search(r'^Boot' + current[1] + r'\*?\s+Limine(?:\s|$)', result, re.M | re.I):
+    if not current:
         raise RuntimeError('Active UEFI entry is not identified as Limine')
-    active_line = next(line for line in result.splitlines() if line.startswith('Boot' + current[1]))
+    active_line = next((line for line in result.splitlines() if line.startswith('Boot' + current[1])), '')
     if r'\efi\limine\limine_x64.efi' not in active_line.lower():
-        raise RuntimeError('Unexpected active EFI path; manual review required')
+        raise RuntimeError('Active UEFI entry is not identified as Limine by its EFI path')
     if sha(regular(Path('/boot/EFI/limine/limine_x64.efi'))) != '3fe0de87c13a12998b3c785b0c57ddfbcd6fc57251c1b0628604583ec8e9a5ff':
         raise RuntimeError('Active ESP Limine binary is not the qualified 12.8.0 build')
-    package = subprocess.run(['pacman', '-Q', 'limine'], check=True, capture_output=True, text=True).stdout
-    if not re.match(r'limine 12\.8\.0-', package):
-        raise RuntimeError('Unqualified Limine version; review compatibility before activation')
     mount = subprocess.run(['findmnt', '-J', '-M', '/boot', '-o', 'TARGET,FSTYPE,OPTIONS'],
                            check=True, capture_output=True, text=True)
     data = json.loads(mount.stdout)['filesystems'][0]

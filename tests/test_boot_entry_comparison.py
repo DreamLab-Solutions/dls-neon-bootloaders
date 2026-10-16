@@ -75,23 +75,27 @@ class BootEntryComparison(unittest.TestCase):
         self.assertIn("osprober-efi-ABCD-1234", m.boot_entries(text)[-1])
 
 
-class RenameTransaction(unittest.TestCase):
+class MultibootPreservation(unittest.TestCase):
     setUp = tx.Transactions.setUp
     tearDown = tx.Transactions.tearDown
     install = tx.Transactions.install
+    runner = tx.Transactions.runner
 
-    def runner(self, command, check):
-        tx.Transactions.runner(self, command, check)
-        if command[0] == "grub-mkconfig" and self.fail == "rename":
-            from pathlib import Path
-            path = Path(command[2])
-            path.write_text(path.read_text().replace(windows(), windows("nvme1n1p1", "hd1,gpt1")))
-
-    def test_rename_install_then_exact_restore(self):
+    def test_windows_macos_linux_and_unknown_entries_are_byte_identical(self):
         self.before += windows()
+        self.before += "menuentry 'macOS via OpenCore' {\n search --fs-uuid --set=root CAFE-1234\n chainloader /EFI/OC/OpenCore.efi\n}\n"
+        self.before += "menuentry 'Fedora' {\n linux /vmlinuz root=UUID=fake ro\n initrd /initramfs.img\n}\n"
+        self.before += "menuentry 'Custom rescue' {\n configfile /rescue/grub.cfg\n}\n"
         self.cfg.write_text(self.before)
-        self.fail = "rename"
         self.install()
-        self.assertIn("/dev/nvme1n1p1", self.cfg.read_text())
+        self.assertTrue(self.cfg.read_bytes().startswith(self.before.encode()))
+        self.assertEqual(m.boot_entries(self.before),m.boot_entries(self.cfg.read_text()))
         self.manager.restore()
-        self.assertEqual(self.cfg.read_text(), self.before)
+        self.assertEqual(self.cfg.read_text(),self.before)
+
+    def test_theme_does_not_reprobe_or_renumber_other_os(self):
+        self.before += windows();self.cfg.write_text(self.before)
+        self.install()
+        self.assertIn('/dev/nvme0n1p1',self.cfg.read_text())
+        self.assertNotIn('os-prober',self.calls)
+        self.assertNotIn('grub-mkconfig',self.calls)

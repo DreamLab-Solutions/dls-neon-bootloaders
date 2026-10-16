@@ -5,8 +5,8 @@
   "resolution": "1920x1080",
   "scope": "Real GRUB UEFI menu, selection, submenu, console and scrolling; demo paths; no kernel boot",
   "screenshots": {
-    "01-menu.png": "1e285d9dbb8b39df34da55ba092b61658c3adbf1063675eb70eb235b61e73c59",
-    "02-selected.png": "2f3c0b1ce7ae4cdf30ba58a78a1cf821737f734ac1983f17784762e269d90793",
+    "01-menu.png": "4d8e90122f338e1523e9bb8ffa3ac1a025563d70494918280a106d42d145fd1d",
+    "02-selected.png": "5554ac2faf8e8dcb79fff5b800df4c2d6b63554f08c04f37706dccd24c6bf860",
     "03-submenu.png": "b6026f7dda19a7e2133a2aed317b0a5f4655ea8173f5421cf0c9523fdfd2da65",
     "04-console.png": "252e3ff15ba4bf539f1a61597c3a9688f2efd3ee08cc6dc5b6eebda53c986dfc",
     "05-scrolling.png": "d3d1a1bdb6f820789b38b359dd83c9b446515f967b228a6d0d04ce059ad23a63"
@@ -17,5 +17,6 @@
     "03-submenu.png": "grub-synaptic-cosmos-1080p-submenu.png",
     "04-console.png": "grub-synaptic-cosmos-1080p-console.png",
     "05-scrolling.png": "grub-synaptic-cosmos-1080p-scrolling.png"
-  }
+  },
+  "appearance_mode": "native appearance commands appended after multiboot demo entries; no OS kernel boot"
 }

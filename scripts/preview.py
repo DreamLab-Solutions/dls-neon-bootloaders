@@ -11,6 +11,7 @@ import subprocess
 import time
 
 from PIL import Image
+from theme_manager import appearance_commands
 
 ROOT = Path(__file__).resolve().parents[1]
 RESOLUTIONS = {"720p": "1280x720", "1080p": "1920x1080", "1440p": "2560x1440", "4k": "3840x2160"}
@@ -60,6 +61,17 @@ submenu 'Scrolling test (preview)' {{
     for number in range(1, 13):
         config += f"  menuentry 'Ubuntu test entry {number:02}' {{ echo 'Preview only'; sleep 1; }}\n"
     config += "}\n"
+    # Exercise the same appearance block used by installation, after native entries.
+    start = config.index('set gfxmode=')
+    end = config.index('set default=0')
+    old_graphics = 'set gfxmode=1024x768\n'+fonts+'\nset gfxterm_font=\"DejaVu Sans Mono Regular 14\"\nterminal_output gfxterm\n'
+    config = config[:start] + old_graphics + config[end:]
+    extra = "menuentry 'Windows Boot Manager (demo)' { echo 'Preview only'; sleep 3; }\n"
+    extra += "menuentry 'macOS via OpenCore (demo)' { echo 'Preview only'; sleep 3; }\n"
+    extra += "menuentry 'Other Linux (demo)' { echo 'Preview only'; sleep 3; }\n"
+    config = config.replace("submenu 'Scrolling test (preview)'",extra+"submenu 'Scrolling test (preview)'")
+    config += appearance_commands('($root)/boot/grub/themes/dls-neon',profile,60,
+                                  sorted(p.name for p in source.glob('*.pf2')))
     (boot / "grub.cfg").write_text(config)
     subprocess.run(["grub-script-check", str(boot / "grub.cfg")], check=True)
     iso = dest / "preview.iso"

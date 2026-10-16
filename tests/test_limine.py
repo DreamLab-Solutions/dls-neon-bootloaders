@@ -42,6 +42,14 @@ class LimineTests(unittest.TestCase):
         (source / 'manifest.json').write_text(json.dumps({p.name: m.sha(p.read_bytes()) for p in source.iterdir()}))
         return source
 
+    def test_multiboot_windows_macos_linux_and_custom_entries_are_unchanged(self):
+        extra=b'/Windows\n protocol: efi\n path: guid(example):/EFI/Microsoft/Boot/bootmgfw.efi\n/macOS via OpenCore\n protocol: efi\n path: guid(example):/EFI/OC/OpenCore.efi\n/Fedora\n protocol: linux\n kernel_path: boot():/vmlinuz\n/Custom network rescue\n protocol: efi\n path: boot():/custom.efi\n'
+        original=BASE+extra;self.manager.config.write_bytes(original)
+        self.manager.install(self.source)
+        updated=self.manager.config.read_bytes()
+        self.assertEqual(original[original.index(b'/Omarchy'):],updated[updated.index(b'/Omarchy'):])
+        self.manager.restore();self.assertEqual(self.manager.config.read_bytes(),original)
+
     def test_switch_plan_read_only_and_entries_preserved(self):
         self.manager.install(self.source)
         before = {str(p): p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
@@ -202,8 +210,19 @@ class LimineTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'requires root'): m.host_guard()
 
     def test_host_guard_refuses_other_platform(self):
-        with patch.object(m.Path, 'read_text', return_value='ID=ubuntu\n'):
-            with self.assertRaisesRegex(RuntimeError, 'Omarchy'): m.host_guard()
+        from types import SimpleNamespace
+        with patch.object(m.os,'uname',return_value=SimpleNamespace(machine='aarch64')):
+            with self.assertRaisesRegex(RuntimeError,'x86-64'):m.host_guard()
+
+    def test_host_guard_does_not_require_omarchy_label_or_pacman(self):
+        from types import SimpleNamespace
+        boot='BootCurrent: 0001\nBoot0001* Custom Linux HD(1,GPT,fake,0,1)/File(\\EFI\\limine\\limine_x64.efi)\n'
+        def run(command,**kwargs):
+            if command[0]=='efibootmgr':return SimpleNamespace(stdout=boot)
+            if command[0]=='findmnt':return SimpleNamespace(stdout=json.dumps({'filesystems':[{'fstype':'vfat','options':'rw,relatime'}]}))
+            raise AssertionError('Unexpected distro-specific command: '+str(command))
+        with patch.object(m.os,'geteuid',return_value=0),patch.object(m.Path,'is_dir',return_value=True),patch.object(m.subprocess,'run',side_effect=run),patch.object(m,'regular',return_value=b'\x00'*5),patch.object(m,'sha',return_value='3fe0de87c13a12998b3c785b0c57ddfbcd6fc57251c1b0628604583ec8e9a5ff'),patch.object(m.Path,'glob',side_effect=lambda _: [m.Path('/fake')]):
+            m.host_guard()
 
     def test_host_guard_refuses_other_active_loader(self):
         with patch.object(m.Path, 'read_text', return_value='ID=omarchy\n'), patch.object(m.os, 'geteuid', return_value=0), patch.object(m.Path, 'is_dir', return_value=True), patch.object(m.subprocess, 'run') as run:

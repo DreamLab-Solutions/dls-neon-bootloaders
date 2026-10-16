@@ -151,3 +151,28 @@ separate from merging the private implementation.
 The final 0.4.0 suite passes 92 tests on isolated Debian Python 3.11/Tk/Xvfb.
 The packaged chooser was opened and its GRUB/Limine previews switched without
 requesting privileges or enabling application before a reviewed plan.
+
+
+## 0.5.0 console and multiboot follow-up
+
+The user explicitly requested an interactive console instead of the Tk UI and
+asked that Windows, macOS and other Linux entries not stop theme installation.
+The new console has no GUI dependencies. Tests cover browsing without privilege,
+all-OS plan display, preview selection, stale review invalidation, cancellation,
+recovery/final confirmations, apply and restore dispatch.
+
+GRUB now preserves every original config byte, appends only native appearance
+commands and retains a dedicated generator hook. Installation never runs
+os-prober or grub-mkconfig. UUID/GRUB-relative asset lookup, grub2 layouts/tools,
+legacy restore and failure cleanup are covered. Limine tests likewise preserve
+mixed Windows/macOS/Linux/custom entry sections exactly. Detection no longer
+uses distro names; actual EFI/layout/hash safeguards remain. This is not a claim
+of physical Windows/macOS boot or universal loader compatibility. No running
+laptop boot files were changed for these tests.
+
+The 0.5.0 suite passes 110 tests. Real GRUB/UEFI menu navigation uses the same
+appearance helper as installation, appended after mixed-OS demo entries. A further
+Synaptic Cosmos run changes a pre-existing 1024×768 graphics mode to the requested
+1080p, checks native menu pixels and captures all five distinct screens. Runtime
+packages retain previews and linked documentation images; bulk test captures stay
+in Git to reduce download size.

@@ -5,8 +5,8 @@
   "resolution": "1920x1080",
   "scope": "Real GRUB UEFI menu, selection, submenu, console and scrolling; demo paths; no kernel boot",
   "screenshots": {
-    "01-menu.png": "938320178d4d35a456c1757de9281dfbde85acd7900e64129048837b0288f20e",
-    "02-selected.png": "a4f0a67109b09a0c44d97195fe5a2ad1b7acd0f8934d580ddd3ce133c4b74792",
+    "01-menu.png": "0d251221bf5dd8116a0e7a1e4e25a7e2831fe2ef3ef14998a20e6f869dbaddea",
+    "02-selected.png": "9168c1425423962cd338cfa341ccd87cce5858fde450f178b4d0a564052e4305",
     "03-submenu.png": "93a16ee415393b5718f102b8a823a6b4f9179b025015adbb8ee2a84665fc5568",
     "04-console.png": "803481011be781c4b5b448fb5d4a0a38d13359d527c846a05b6d0a2574b82848",
     "05-scrolling.png": "18e4d3872d8bf23023f1aeaccf971543c50141e07a5abaa92f03d32445cc458c"
@@ -17,5 +17,6 @@
     "03-submenu.png": "grub-quantum-fabric-1080p-submenu.png",
     "04-console.png": "grub-quantum-fabric-1080p-console.png",
     "05-scrolling.png": "grub-quantum-fabric-1080p-scrolling.png"
-  }
+  },
+  "appearance_mode": "native appearance commands appended after multiboot demo entries; no OS kernel boot"
 }

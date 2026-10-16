@@ -6,15 +6,13 @@ import hashlib
 import importlib.util
 import io
 import json
-import math
 import os
 from pathlib import Path
-import queue
 import re
 import shlex
+import shutil
 import subprocess
 import sys
-import threading
 
 THEMES = ('event-horizon', 'quantum-fabric', 'sentient-atlas', 'synaptic-cosmos')
 PROFILES = ('720p', '1080p', '1440p', '4k')
@@ -62,31 +60,6 @@ def verify_bundle(base):
     return catalog
 
 
-def distro(root=Path('/')):
-    path = root / 'etc/os-release'
-    if path.is_symlink():
-        resolved = path.resolve(strict=True)
-        if resolved != (root / 'usr/lib/os-release').resolve(strict=True):
-            raise RuntimeError('Destinazione os-release non standard')
-        path = resolved
-    values = {}
-    for line in regular(path).decode().splitlines():
-        if '=' in line and not line.startswith('#'):
-            key, value = line.split('=', 1)
-            tokens = shlex.split(value)
-            values[key] = tokens[0] if len(tokens) == 1 else ''
-    return values.get('ID', '')
-
-
-def detected_backend(root=Path('/')):
-    identity = distro(root)
-    if identity == 'omarchy':
-        return 'limine'
-    if identity in {'ubuntu', 'debian'}:
-        return 'grub'
-    raise RuntimeError('Sistema non qualificato: supportati Ubuntu/Debian con GRUB e Omarchy con Limine 12.8')
-
-
 def load_manager(base, backend):
     path = member(base, backend + '_manager.py')
     spec = importlib.util.spec_from_file_location('dls_' + backend, path)
@@ -95,27 +68,50 @@ def load_manager(base, backend):
     return module
 
 
+def detected_backend(root=Path('/')):
+    if not (root/'sys/firmware/efi').is_dir():
+        raise RuntimeError('Avvio UEFI non verificabile: anteprime disponibili, applicazione da Linux UEFI con GRUB o Limine')
+    boot=subprocess.check_output(['efibootmgr','-v'],text=True)
+    current=re.search(r'^BootCurrent: ([0-9a-fA-F]{4})$',boot,re.M)
+    line=next((x for x in boot.splitlines() if current and x.startswith('Boot'+current[1])), '')
+    file=re.search(r'File\(([^)]+)\)',line,re.I)
+    path=file[1].replace('\\','/').lower() if file else ''
+    if path.endswith('/limine_x64.efi'):return 'limine'
+    if path.endswith(('/grubx64.efi','/shimx64.efi')):return 'grub'
+    raise RuntimeError('La voce UEFI attiva non è GRUB/Limine. Windows Boot Manager e il loader Apple non usano questi temi; nessun bootloader sarà sostituito.')
+
+
 def grub_guard():
-    if os.uname().machine != 'x86_64' or not Path('/sys/firmware/efi').is_dir():
-        raise RuntimeError('Il selettore qualifica GRUB soltanto su UEFI x86-64')
-    boot = subprocess.check_output(['efibootmgr', '-v'], text=True)
-    current = re.search(r'^BootCurrent: ([0-9a-fA-F]{4})$', boot, re.M)
-    line = next((x for x in boot.splitlines() if current and x.startswith('Boot' + current[1])), '')
-    match = re.search(r'HD\(\d+,GPT,([0-9a-f-]+),[^)]*\).*File\((\\EFI\\(?:ubuntu|debian)\\(?:shimx64|grubx64)\.efi)\)', line, re.I)
-    if not match:
-        raise RuntimeError('La voce UEFI attiva non identifica il GRUB Ubuntu/Debian qualificato')
-    mounted = json.loads(subprocess.check_output(['findmnt', '-J', '-M', '/boot/efi', '-o', 'TARGET,SOURCE,FSTYPE'], text=True))['filesystems'][0]
-    if mounted['fstype'] != 'vfat':
-        raise RuntimeError('ESP FAT non montata in /boot/efi')
-    partuuid = subprocess.check_output(['lsblk', '-dnro', 'PARTUUID', mounted['source']], text=True).strip()
-    if partuuid.lower() != match[1].lower():
-        raise RuntimeError('La ESP montata non corrisponde alla voce UEFI attiva')
-    folder = Path('/boot/efi') / match[2].replace('\\', '/').lstrip('/')
-    # A shim entry qualifies only when its sibling GRUB executable also exists.
-    regular(folder)
-    regular(folder.with_name('grubx64.efi'))
-    regular(Path('/etc/default/grub'))
-    subprocess.run(['grub-mkconfig', '--version'], check=True, capture_output=True)
+    if os.uname().machine!='x86_64' or detected_backend()!='grub':
+        raise RuntimeError('Occorre GRUB attivo in UEFI x86-64')
+    boot=subprocess.check_output(['efibootmgr','-v'],text=True)
+    current=re.search(r'^BootCurrent: ([0-9a-fA-F]{4})$',boot,re.M)
+    line=next((x for x in boot.splitlines() if current and x.startswith('Boot'+current[1])), '')
+    match=re.search(r'HD\(\d+,GPT,([0-9a-f-]+),[^)]*\).*File\((\\EFI\\[^)]+\\(?:shimx64|grubx64)\.efi)\)',line,re.I)
+    if not match:raise RuntimeError('Percorso EFI GRUB e partizione GPT non verificabili')
+    mounts=json.loads(subprocess.check_output(['findmnt','-J','-t','vfat','-o','TARGET,SOURCE,FSTYPE'],text=True))['filesystems']
+    matched=[]
+    for mount in mounts:
+        partuuid=subprocess.check_output(['lsblk','-dnro','PARTUUID',mount['source']],text=True).strip()
+        if partuuid.lower()==match[1].lower():matched.append(Path(mount['target']))
+    if len(matched)!=1:raise RuntimeError('La ESP montata non corrisponde univocamente alla voce UEFI attiva')
+    binary=matched[0]/match[2].replace('\\','/').lstrip('/')
+    regular(binary);regular(binary.with_name('grubx64.efi'))
+    configs=[p for p in ('boot/grub/grub.cfg','boot/grub2/grub.cfg') if Path('/'+p).is_file()]
+    if len(configs)!=1:raise RuntimeError('Configurazione GRUB assente o ambigua: verificare /boot/grub e /boot/grub2')
+    tools={}
+    for key,name in [('check','script-check'),('probe','probe'),('relpath','mkrelpath')]:
+        tool=shutil.which('grub-'+name) or shutil.which('grub2-'+name)
+        if not tool:raise RuntimeError('Manca il programma GRUB '+name)
+        tools[key]=tool
+    return {'config':configs[0],'tools':tools}
+
+
+def menu_titles(module, text):
+    titles=[shlex.split(header)[0] for header in module.boot_entries(text)]
+    if module.has_bls_menu(text):
+        titles.append('BLS: voci dinamiche della distribuzione, file originali conservati')
+    return titles
 
 
 def plan(base, backend, theme, profile, timeout):
@@ -123,18 +119,20 @@ def plan(base, backend, theme, profile, timeout):
     if backend != detected_backend():
         raise RuntimeError('Bootloader richiesto diverso dal target del sistema; nessuna migrazione automatica')
     module = load_manager(base, backend)
+    platform = {}
     if backend == 'limine':
         module.host_guard()
     else:
-        grub_guard()
+        platform = grub_guard()
     source = base / catalog[theme][backend]
-    config = Path('/boot/limine.conf' if backend == 'limine' else '/boot/grub/grub.cfg')
+    config_rel = 'boot/limine.conf' if backend=='limine' else platform['config']
+    config = Path('/'+config_rel)
     state = Path('/var/lib/dls-neon-' + backend)
     active, pending = state / 'active.json', state / 'pending.json'
     if pending.exists():
         raise RuntimeError('Transazione interrotta: usare status/recovery prima del selettore')
     before = regular(config)
-    manager = module.Manager()
+    manager = module.Manager() if backend=='limine' else module.Manager(config=config_rel,tools=platform['tools'])
     can_apply, reason = True, ''
     if backend == 'limine':
         key, _, _ = module.assets(source)
@@ -151,7 +149,7 @@ def plan(base, backend, theme, profile, timeout):
             manager.plan(source, replace=bool(current))
     else:
         module.verify_assets(source)
-        if not module.boot_entries(before.decode()):
+        if not module.has_native_menu(before.decode()):
             raise RuntimeError('Configurazione GRUB senza voci riconoscibili')
         if active.exists() and json.loads(regular(active)).get('status') != 'active':
             raise RuntimeError('Transazione GRUB incompleta: seguire la procedura di recovery')
@@ -163,7 +161,9 @@ def plan(base, backend, theme, profile, timeout):
               'config_sha256': sha(before), 'bundle_sha256': sha(regular(base / 'manifest.json')),
               'active_sha256': sha(regular(active)) if active.exists() else None,
               'can_apply': can_apply, 'can_restore': active.exists(), 'reason': reason,
-              'boot_entries': 'conservate; verifica prima della sostituzione',
+              'config_path':config_rel,'grub_tools':platform.get('tools'),
+              'entries':([line.lstrip('/+').strip() for line in before.decode().splitlines() if line.startswith('/')] if backend=='limine' else menu_titles(module,before.decode())),
+              'boot_entries': 'conservate senza rigenerare o filtrare sistemi operativi',
               'reboot': False}
     record['review_sha256'] = sha(json.dumps(record, sort_keys=True).encode())
     return record
@@ -180,7 +180,7 @@ def operation(base, args):
     if record['review_sha256'] != args.expected_review:
         raise RuntimeError('Il piano o il sistema è cambiato: ripetere Verifica piano')
     module = load_manager(base, args.backend)
-    manager = module.Manager()
+    manager = module.Manager() if args.backend=='limine' else module.Manager(config=record['config_path'],tools=record['grub_tools'])
     if args.action == 'apply':
         if not record['can_apply']:
             raise RuntimeError(record['reason'])
@@ -190,7 +190,7 @@ def operation(base, args):
                 manager.install(source, expected=record['config_sha256'], replace=record['can_restore'])
             else:
                 # Recheck the reviewed GRUB baseline immediately before its transaction.
-                if sha(regular(Path('/boot/grub/grub.cfg'))) != record['config_sha256']:
+                if sha(regular(Path('/'+record['config_path']))) != record['config_sha256']:
                     raise RuntimeError('Configurazione modificata dopo la revisione')
                 manager.install(source, args.profile, args.timeout, expected_config=record['config_sha256'])
         result = 'Tema applicato e verificato nei file. Il prossimo riavvio resta da verificare.'
@@ -204,195 +204,119 @@ def operation(base, args):
     return {'result': result, 'hardware_boot_verified': False}
 
 
-class Wizard:
-    def __init__(self, window, base, executor=None):
-        import tkinter as tk
-        from tkinter import ttk, messagebox
-        self.tk, self.ttk, self.messagebox = tk, ttk, messagebox
-        style = ttk.Style(window); style.theme_use('clam')
-        style.configure('.', background='#071723', foreground='#E7F2EE')
-        style.configure('TButton', background='#00A49A', foreground='#071723', padding=8)
-        style.map('TButton', background=[('disabled','#273743'),('active','#30D4BA')], foreground=[('disabled','#B5CEC8')])
-        style.configure('TCombobox', fieldbackground='#273743', background='#00A49A', foreground='#E7F2EE')
-        style.map('TCombobox', fieldbackground=[('readonly','#273743')], selectbackground=[('readonly','#273743')], selectforeground=[('readonly','#E7F2EE')])
-        style.configure('Title.TLabel', foreground='#D9FF00')
-        window.configure(background='#071723')
-        self.window, self.base = window, base
-        self.catalog = verify_bundle(base)
-        self.executor = executor or self.execute
-        self.events = queue.Queue()
-        self.busy, self.review = False, None
-        self.preview_cache, self.preview_signature = {}, None
-        self.theme = tk.StringVar(value='synaptic-cosmos')
-        self.profile, self.timeout = tk.StringVar(value='1080p'), tk.IntVar(value=8)
-        self.recovery = tk.BooleanVar(value=False)
-        try:
-            self.backend = detected_backend()
-            target = 'Omarchy · Limine 12.8' if self.backend == 'limine' else 'Ubuntu/Debian · GRUB UEFI'
-        except (OSError, RuntimeError) as error:
-            self.backend, target = None, str(error)
-        self.preview_backend = tk.StringVar(value=self.backend or 'limine')
-        self.status = tk.StringVar(value='Scegli un tema. La verifica del piano legge il sistema senza modificarlo.')
-        window.title('DreamLab · Temi di avvio')
-        window.geometry('1180x880')
-        window.minsize(900, 760)
-        frame = ttk.Frame(window, padding=18); frame.pack(fill='both', expand=True)
-        ttk.Label(frame, text='DreamLab · Scegli il tuo universo', font=('', 20, 'bold'), style='Title.TLabel').pack(anchor='w')
-        ttk.Label(frame, text='Target: ' + target).pack(anchor='w', pady=(4, 12))
-        self.inputs = []
-        choices = ttk.Frame(frame); choices.pack(fill='x')
-        for slug in THEMES:
-            b = ttk.Radiobutton(choices, text=self.catalog[slug]['title'], value=slug, variable=self.theme, command=self.change)
-            b.pack(side='left', padx=(0, 18)); self.inputs.append(b)
-        tools = ttk.Frame(frame); tools.pack(fill='x', pady=10)
-        ttk.Label(tools, text='Anteprima menu:').pack(side='left')
-        combo = ttk.Combobox(tools, values=('limine','grub'), textvariable=self.preview_backend, state='readonly', width=10)
-        combo.pack(side='left', padx=8); combo.bind('<<ComboboxSelected>>', lambda _: self.show_preview()); self.inputs.append(combo)
-        ttk.Label(tools, text='Immagini da bootloader reale in VM · voci dimostrative · il firmware può usare un’altra risoluzione').pack(side='left')
-        self.picture = ttk.Label(frame, anchor='center'); self.picture.pack(fill='both', expand=True)
-        self.caption = ttk.Label(frame, anchor='center'); self.caption.pack(fill='x', pady=4)
-        settings = ttk.Frame(frame); settings.pack(fill='x', pady=6)
-        ttk.Label(settings, text='GRUB: profilo').pack(side='left')
-        profile = ttk.Combobox(settings, values=PROFILES, textvariable=self.profile, width=8, state='readonly')
-        profile.pack(side='left', padx=6); self.inputs.append(profile)
-        ttk.Label(settings, text='Attesa GRUB (secondi)').pack(side='left')
-        timeout = ttk.Spinbox(settings, from_=1, to=60, textvariable=self.timeout, width=5)
-        timeout.pack(side='left', padx=6); self.inputs.append(timeout)
-        ttk.Label(settings, text='Limine conserva risoluzione, attesa e impostazioni native.').pack(side='left', padx=10)
-        self.profile.trace_add('write', lambda *_: self.invalidate())
-        self.timeout.trace_add('write', lambda *_: self.invalidate())
-        self.check = ttk.Checkbutton(frame, text='Ho verificato la copia indipendente del backup e una chiavetta live UEFI utilizzabile.', variable=self.recovery, command=self.buttons)
-        self.check.pack(anchor='w', pady=6)
-        ttk.Label(frame, textvariable=self.status, wraplength=1100).pack(fill='x', pady=6)
-        actions = ttk.Frame(frame); actions.pack(fill='x')
-        self.check_plan = ttk.Button(actions, text='1 · Verifica piano (sola lettura)', command=lambda: self.start('plan'))
-        self.apply = ttk.Button(actions, text='2 · Applica tema', command=lambda: self.confirm('apply'))
-        self.restore = ttk.Button(actions, text='Ripristina precedente', command=lambda: self.confirm('restore'))
-        for button in (self.check_plan,self.apply,self.restore): button.pack(side='left', padx=(0,10))
-        window.protocol('WM_DELETE_WINDOW', self.close)
-        self.show_preview(); self.buttons(); self.timer = window.after(100, self.poll)
-        window.bind('<Configure>', self.resize)
+class Console:
+    """Terminal interaction; browsing never requires administrative access."""
+    def __init__(self, base, read=input, write=print, execute=None, preview=None):
+        self.base,self.read,self.write=base,read,write
+        self.catalog=verify_bundle(base)
+        self.theme,self.backend,self.preview_backend='synaptic-cosmos',None,'limine'
+        self.profile,self.timeout='1080p',8
+        self.review=None
+        self.execute=execute or self.system
+        self.preview=preview or self.open_preview
 
-    def invalidate(self):
-        self.review = None
-        self.buttons()
+    def system(self, action, extra=()):
+        command=([sys.executable] if os.geteuid()==0 else ['sudo','/usr/bin/python3'])+[str(self.base/'dls-neon-setup'),action]
+        if action!='detect':
+            command+=['--backend',self.backend,'--theme',self.theme,'--profile',self.profile,'--timeout',str(self.timeout)]
+        command+=list(extra)
+        result=subprocess.run(command,text=True,capture_output=True)
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or 'Autenticazione o operazione annullata')
+        return json.loads(result.stdout)
 
-    def change(self):
-        self.invalidate(); self.show_preview()
+    def open_preview(self, path):
+        # Use the desktop viewer, never a shell or an administrator GUI.
+        if os.geteuid()!=0 and shutil.which('xdg-open'):
+            subprocess.Popen(['xdg-open',str(path)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        self.write('Anteprima: '+str(path))
 
-    def show_preview(self):
-        slug, backend = self.theme.get(), self.preview_backend.get()
-        path = member(self.base, self.catalog[slug]['preview'][backend])
-        cache_key = (slug, backend)
-        if cache_key not in self.preview_cache:
-            self.preview_cache[cache_key] = self.tk.PhotoImage(file=str(path))
-        original = self.preview_cache[cache_key]
-        width = max(700, min(1100, self.window.winfo_width()-60))
-        height = max(300, min(560, self.window.winfo_height()-320))
-        factor = max(1, math.ceil(original.width()/width), math.ceil(original.height()/height))
-        signature = (slug, backend, factor)
-        if self.preview_signature == signature:
-            return
-        self.preview_signature = signature
-        self.image = original.subsample(factor)
-        self.picture.configure(image=self.image)
-        self.caption.configure(text=f'{self.catalog[slug]["title"]} · {backend.upper()} · 1080p · anteprima VM')
+    def detect(self):
+        result=self.execute('detect')
+        self.backend=result['backend'];self.preview_backend=self.backend;self.review=None
+        self.write('Bootloader attivo rilevato: '+self.backend.upper())
 
-    def resize(self, event):
-        if event.widget is self.window and event.width > 100:
-            self.show_preview()
+    def show_plan(self):
+        if self.backend is None:self.detect()
+        self.review=self.execute('plan')
+        result=self.review
+        self.write('\nPiano: '+result['title']+' · '+result['backend'].upper())
+        self.write('Configurazione: /'+result['config_path'])
+        self.write('Voci conservate, senza rilevarle di nuovo:')
+        for title in result['entries']:
+            self.write('  • '+re.sub(r'[\x00-\x1f\x7f-\x9f]','?',title))
+        if self.backend=='grub':self.write(f'Profilo {self.profile}; menu visibile; attesa {self.timeout} secondi.')
+        else:self.write('Risoluzione, default e attesa Limine invariati.')
+        self.write(result['reason'] or 'Piano verificato. Nessun file di avvio è stato modificato.')
 
-    def buttons(self):
-        active = not self.busy and self.backend is not None
-        self.check_plan.configure(state='normal' if active else 'disabled')
-        approved = active and self.review is not None and self.recovery.get()
-        for button, key in [(self.apply,'can_apply'),(self.restore,'can_restore')]:
-            button.configure(state='normal' if approved and self.review.get(key) else 'disabled')
+    def apply(self, action):
+        if not self.review:
+            self.write('Prima verifica il piano con v.');return
+        allowed='can_apply' if action=='apply' else 'can_restore'
+        if not self.review[allowed]:
+            self.write(self.review['reason'] or 'Operazione non disponibile.');return
+        if self.read('Backup indipendente e chiavetta live UEFI verificati? [s/N] ').strip().lower()!='s':
+            self.write('Operazione annullata.');return
+        word='APPLICA' if action=='apply' else 'RIPRISTINA'
+        if self.read(f'Scrivi {word} per confermare la modifica dei file di avvio: ').strip()!=word:
+            self.write('Operazione annullata.');return
+        result=self.execute(action,['--approve-boot-write','--recovery-confirmed','--expected-review',self.review['review_sha256']])
+        self.review=None;self.write(result['result'])
 
-    def execute(self, action):
-        command = ['pkexec', '/usr/bin/python3', str(self.base/'dls-neon-setup'), action,
-                   '--backend', self.backend, '--theme', self.theme.get(),
-                   '--profile', self.profile.get(), '--timeout', str(self.timeout.get())]
-        if action != 'plan':
-            command += ['--approve-boot-write', '--recovery-confirmed', '--expected-review', self.review['review_sha256']]
-        return command
-
-    def start(self, action):
-        if self.busy: return
-        try:
-            command = self.executor(action)
-        except (ValueError, self.tk.TclError) as error:
-            self.status.set(str(error)); return
-        self.busy = True
-        for widget in self.inputs: widget.configure(state='disabled')
-        self.check.configure(state='disabled'); self.buttons()
-        self.status.set('Autenticazione e verifica in corso…' if action == 'plan' else 'Operazione in corso. Attendi il risultato.')
-        def work():
+    def run(self):
+        self.write('DreamLab · Temi di avvio · console interattiva')
+        self.write('Windows, macOS, Linux e voci personalizzate già presenti restano della distribuzione.')
+        self.write('Sfogliare e aprire le anteprime non richiede sudo. q esce senza modifiche.')
+        while True:
+            self.write('\n'+ '  |  '.join(f'{n} {self.catalog[slug]["title"]}'+(' *' if slug==self.theme else '') for n,slug in enumerate(THEMES,1)))
+            self.write(f'Anteprima: {self.preview_backend.upper()} · p apri immagine · b cambia anteprima GRUB/Limine')
+            self.write('d rileva bootloader · v verifica piano · o profilo/attesa GRUB · a applica · r ripristina · q esci')
             try:
-                result = subprocess.run(command, capture_output=True, text=True, check=True)
-                self.events.put((action, json.loads(result.stdout), None))
-            except (OSError, ValueError, subprocess.SubprocessError) as error:
-                self.events.put((action,None,getattr(error,'stderr',None) or str(error)))
-        threading.Thread(target=work, daemon=True).start()
-
-    def confirm(self, action):
-        if not self.review or not self.recovery.get() or self.busy: return
-        text = ('Applicare ' + self.review['title'] if action == 'apply' else 'Ripristinare il tema precedente')
-        text += '?\nSaranno modificati i file grafici di avvio. Il backup di transazione viene conservato. Nessun riavvio automatico.'
-        if self.messagebox.askyesno('Conferma modifica dell’avvio', text): self.start(action)
-
-    def poll(self):
-        try:
-            action, result, error = self.events.get_nowait()
-        except queue.Empty:
-            self.timer = self.window.after(100,self.poll); return
-        self.busy = False
-        for widget in self.inputs:
-            widget.configure(state='readonly' if isinstance(widget,self.ttk.Combobox) else 'normal')
-        self.check.configure(state='normal')
-        if error:
-            self.review = None; self.status.set('Operazione fermata: ' + error.strip())
-        elif action == 'plan':
-            self.review = result
-            text = result['reason'] or ('Piano verificato per ' + result['title'] + '. Backup di transazione e controllo delle voci inclusi.')
-            if self.backend == 'grub': text += f' Profilo {result["profile"]}; attesa {result["timeout"]} s.'
-            self.status.set(text)
-        else:
-            self.review = None; self.status.set(result['result'])
-        self.buttons(); self.timer = self.window.after(100,self.poll)
-
-    def close(self):
-        if self.busy:
-            self.status.set('Attendi la fine dell’operazione prima di chiudere.'); return
-        self.window.after_cancel(self.timer)
-        self.window.destroy()
+                choice=self.read('Scelta: ').strip().lower()
+                if choice in {'q','0','esci'}:return
+                if choice in {'1','2','3','4'}:
+                    self.theme=THEMES[int(choice)-1];self.review=None
+                elif choice=='p':
+                    name=self.catalog[self.theme]['preview'][self.preview_backend]
+                    self.preview(member(self.base,name))
+                elif choice=='b':self.preview_backend='grub' if self.preview_backend=='limine' else 'limine'
+                elif choice=='d':self.detect()
+                elif choice=='v':self.show_plan()
+                elif choice=='o':
+                    profile=self.read('Profilo GRUB [720p/1080p/1440p/4k]: ').strip()
+                    timeout=self.read('Attesa GRUB [1–60 secondi]: ').strip()
+                    if profile not in PROFILES or not timeout.isdigit() or not 1<=int(timeout)<=60:
+                        self.write('Valori non validi: impostazioni precedenti conservate.');continue
+                    self.profile,self.timeout=profile,int(timeout);self.review=None
+                elif choice in {'a','r'}:self.apply('apply' if choice=='a' else 'restore')
+                else:self.write('Scelta non riconosciuta.')
+            except (EOFError,KeyboardInterrupt):self.write('\nUscita senza ulteriori operazioni.');return
+            except (OSError,ValueError,RuntimeError,subprocess.SubprocessError) as error:
+                self.review=None;self.write('Operazione non eseguita: '+str(error))
+                self.write('Puoi continuare a scegliere/aprire anteprime oppure uscire.')
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', nargs='?', choices=('gui','plan','apply','restore'), default='gui')
-    parser.add_argument('--backend', choices=('grub','limine'))
-    parser.add_argument('--theme', choices=THEMES, default='synaptic-cosmos')
-    parser.add_argument('--profile', choices=PROFILES, default='1080p')
-    parser.add_argument('--timeout', type=int, choices=range(1,61), default=8)
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action',nargs='?',choices=('console','detect','plan','apply','restore'),default='console')
+    parser.add_argument('--backend',choices=('grub','limine'))
+    parser.add_argument('--theme',choices=THEMES,default='synaptic-cosmos')
+    parser.add_argument('--profile',choices=PROFILES,default='1080p')
+    parser.add_argument('--timeout',type=int,choices=range(1,61),default=8)
     parser.add_argument('--expected-review')
-    parser.add_argument('--approve-boot-write', action='store_true')
-    parser.add_argument('--recovery-confirmed', action='store_true')
-    args = parser.parse_args()
+    parser.add_argument('--approve-boot-write',action='store_true')
+    parser.add_argument('--recovery-confirmed',action='store_true')
+    args=parser.parse_args()
     try:
-        if args.action == 'gui':
-            if os.geteuid() == 0:
-                raise RuntimeError('Avvia il selettore senza sudo; l’autenticazione arriva solo alle operazioni amministrative')
-            try:
-                import tkinter as tk
-            except ImportError:
-                raise RuntimeError('Manca Tk: installare python3-tk su Ubuntu/Debian oppure tk su Omarchy. I gestori CLI restano disponibili.')
-            window = tk.Tk(); Wizard(window,BASE); window.mainloop()
+        if args.action=='console':Console(BASE).run()
+        elif args.action=='detect':
+            if os.geteuid()!=0:raise RuntimeError('La lettura UEFI richiede sudo')
+            print(json.dumps({'backend':detected_backend()}))
         else:
-            if not args.backend: parser.error('--backend richiesto per questa azione')
+            if not args.backend:parser.error('--backend richiesto')
             print(json.dumps(operation(BASE,args),ensure_ascii=False))
-    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
-        print(str(error),file=sys.stderr); sys.exit(1)
+    except (OSError,ValueError,RuntimeError,subprocess.SubprocessError) as error:
+        print(str(error),file=sys.stderr);sys.exit(1)
 
 
-if __name__ == '__main__': main()
+if __name__=='__main__':main()

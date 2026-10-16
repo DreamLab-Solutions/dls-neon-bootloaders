@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Build the combined graphical installer; never reads host boot configuration."""
+"""Build the combined console installer; never reads host boot configuration."""
 import hashlib
 import json
+import re
 from pathlib import Path
 import shutil
 import tarfile
@@ -9,6 +10,18 @@ import tarfile
 ROOT = Path(__file__).resolve().parents[1]
 THEMES = {'event-horizon':'Event Horizon','quantum-fabric':'Quantum Fabric',
           'sentient-atlas':'Sentient Atlas','synaptic-cosmos':'Synaptic Cosmos'}
+
+
+
+def copy_docs(target):
+    # Runtime keeps documentation and directly linked screenshots; bulk test captures stay in Git.
+    shutil.copytree(ROOT/'docs',target,ignore=shutil.ignore_patterns('*.png'))
+    for document in (ROOT/'docs').rglob('*.md'):
+        for name in re.findall(r'\((screenshots/[^)]+\.png)\)',document.read_text()):
+            source=ROOT/'docs'/name
+            if source.is_file():
+                destination=target/name;destination.parent.mkdir(parents=True,exist_ok=True)
+                shutil.copy2(source,destination)
 
 
 def main():
@@ -44,7 +57,7 @@ def main():
         shutil.copy2(ROOT/name,target/name)
     readme=(ROOT/'docs/INSTALLER.md').read_text().replace('(OMARCHY.md)','(docs/OMARCHY.md)').replace('(RECOVERY.md)','(docs/RECOVERY.md)')
     (target/'README.md').write_text(readme)
-    shutil.copytree(ROOT/'docs',target/'docs')
+    copy_docs(target/'docs')
     files={str(p.relative_to(target)):hashlib.sha256(p.read_bytes()).hexdigest()
            for p in sorted(target.rglob('*')) if p.is_file()}
     (target/'manifest.json').write_text(json.dumps(files,indent=2)+'\n')

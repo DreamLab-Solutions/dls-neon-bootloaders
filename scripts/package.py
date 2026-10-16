@@ -5,6 +5,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tarfile
+from setup_package import copy_docs
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -20,7 +21,7 @@ def main():
     stage.mkdir(parents=True)
     shutil.copytree(ROOT / "build/theme", stage / "theme")
     shutil.copytree(ROOT / "build/grub-themes", stage / "themes")
-    shutil.copytree(ROOT / "docs", stage / "docs")
+    copy_docs(stage / "docs")
     for file in ["README.md", "LICENSE", "LICENSE-MIT", "ARTWORK-LICENSE.md", "VERSION"]:
         shutil.copy2(ROOT / file, stage / file)
     shutil.copy2(ROOT / "scripts/theme_manager.py", stage / "dls-neon-theme")
@@ -42,7 +43,7 @@ exec python3 "$HERE/dls-neon-theme" install --source "$HERE/theme" "$@"
     shutil.copytree(ROOT / "build/theme", data / "theme")
     shutil.copytree(ROOT / "build/grub-themes", data / "themes")
     doc = deb / "usr/share/doc/dls-neon-grub"
-    shutil.copytree(ROOT / "docs", doc)
+    copy_docs(doc)
     shutil.copy2(ROOT / "README.md", doc / "README.md")
     shutil.copy2(ROOT / "LICENSE", doc / "copyright")
     shutil.copy2(ROOT / "LICENSE-MIT", doc / "LICENSE-MIT")

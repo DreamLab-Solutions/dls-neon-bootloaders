@@ -1,3 +1,20 @@
+# 0.5.0 appearance-only recovery
+
+New GRUB activations retain all original config bytes and add an appearance block
+at EOF plus /etc/grub.d/99_dls_neon_theme. The current manager restores the exact
+backup only when config, owned hook, assets and backup hashes still match. It
+also supports legacy drop-in records. Backups and assets remain retained.
+
+After a later distro/kernel update, never copy the whole old config over new OS
+entries. Compare the current config with the retained before/after files, remove
+only the marked DLS appearance block and unchanged owned generator hook, and
+retain all current entries and security/default settings. Use trusted live USB
+recovery if needed. Do not run os-prober, update-grub, grub-install or change NVRAM
+as a theme rollback. /boot/grub and /boot/grub2 are supported; identify the active
+layout and mounted filesystem from the saved private inventory, never guessing.
+
+The following is historical drop-in recovery for 0.4 and earlier records.
+
 # Ripristino
 
 ## Il sistema parte e non sono intervenuti aggiornamenti

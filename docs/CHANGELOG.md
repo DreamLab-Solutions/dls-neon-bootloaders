@@ -1,3 +1,16 @@
+## 0.5.0 — Console and multiboot preservation
+
+- Replace Tk with a dependency-light interactive console and optional native-image
+  previews. Browsing never requests root; plan and writes remain separate.
+- Detect the actual UEFI loader instead of distribution identity. Accept standard
+  GRUB/grub2 paths/tools/vendor directories; keep all technical Limine EFI guards.
+- Preserve every original GRUB config byte and append appearance-only commands;
+  use a dedicated generator hook for persistence, without rerunning os-prober or
+  regenerating OS entries during installation. Resolve assets by filesystem UUID
+  and GRUB-relative paths. Restore legacy drop-in records as well as new hooks.
+- Cover Windows, macOS/OpenCore, other Linux and custom entries in both managers.
+  This is entry preservation, not a claim of Windows/macOS kernel boot support.
+
 ## 0.4.0 — Guided choice and native previews
 
 - Add an unprivileged graphical chooser, real bootloader previews and explicit

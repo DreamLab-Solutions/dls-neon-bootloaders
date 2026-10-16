@@ -1,38 +1,29 @@
 # DreamLab · Temi di avvio
 
-Versione **0.4.0**: selettore grafico con scelta e anteprima di Event Horizon,
-Quantum Fabric (proposta 2), Sentient Atlas (3) e Synaptic Cosmos (4).
+Versione **0.5.0**: console interattiva con scelta e anteprima dei quattro temi.
+Il multiboot già presente — Windows, macOS, Linux e voci personalizzate — rimane
+intatto. GRUB conserva ogni byte originale e aggiunge solo comandi grafici;
+Limine conserva la sezione completa delle voci. Nessuna riscoperta o conversione
+OS durante l’applicazione. [Guida e compatibilità](docs/INSTALLER.md).
 
-## Installazione guidata
+Verifica il checksum, estrai `dls-neon-setup-0.5.0.tar.gz` e nella cartella esegui
+`python3 dls-neon-setup`, senza sudo. Scegli 1–4, **p** per l’anteprima,
+**v** per il piano con tutte le voci, **a** per l’applicazione confermata,
+**r** per il ripristino e **q** per uscire. Python e sudo bastano; nessuna Tk.
+Le anteprime PNG si aprono con il visualizzatore predefinito tramite xdg-open.
 
-Verifica il checksum esterno, estrai `dls-neon-setup-0.4.0.tar.gz` e dalla sua
-cartella avvia `python3 dls-neon-setup`, senza sudo. Servono Python 3, Tk e
-Polkit/pkexec; il programma segnala le dipendenze mancanti senza installarle.
-[Guida completa, compatibilità e recovery](docs/INSTALLER.md).
-
-Scegli l’immagine, confronta il menu GRUB/Limine e usa **Verifica piano**.
-Il piano autentica una lettura del sistema; l’applicazione è un passo separato,
-con conferma di backup/live USB e approvazione esplicita della modifica.
-Il piano viene ricontrollato prima della transazione e non c’è riavvio automatico.
-**Ripristina precedente** conserva i backup e rifiuta conflitti con aggiornamenti.
-
-| Target del selettore | Compatibilità |
-|---|---|
-| Ubuntu/Debian x86-64 UEFI con GRUB | ESP FAT in /boot/efi corrispondente alla voce EFI ubuntu/debian attiva; tutti e quattro i temi; profili 720p/1080p/1440p/4k e attesa esplicita |
-| Omarchy x86-64 UEFI con Limine | Esatto Limine 12.8.0 qualificato, ESP FAT in /boot, Secure Boot disabilitato; tutti e quattro i temi; impostazioni native conservate |
-| Altri loader, combinazioni o versioni | Applicazione fermata; nessuna migrazione automatica |
-
-Le anteprime vengono da bootloader reali in VM a 1080p con voci dimostrative.
-Non qualificano l’avvio del kernel; risoluzione e testo reali dipendono dal sistema.
-Il selettore non importa sistemi operativi: Ubuntu sul secondo disco deve essere
-già nel menu del loader o essere selezionato dal firmware.
+Il loader viene rilevato dalla voce UEFI attiva, senza whitelist di distribuzioni:
+GRUB/grub2 su layout standard oppure l’esatto Limine 12.8 qualificato. Windows
+Boot Manager e il loader Apple non usano questi temi; si installa dal Linux con
+GRUB/Limine attivo. Le loro voci nel menu non sono un motivo per fermarsi.
+La verifica tecnica, la conservazione delle voci, il backup e le conferme restano.
 
 ## Gestori separati
 
 GRUB su Ubuntu/Debian: il `.deb` copia soltanto file in /usr e non attiva il tema.
 
 ```sh
-sudo apt install ./dist/dls-neon-grub_0.4.0_all.deb
+sudo apt install ./dist/dls-neon-grub_0.5.0_all.deb
 dls-neon-theme install --theme synaptic-cosmos --dry-run
 sudo dls-neon-theme install --theme synaptic-cosmos --profile 1080p --timeout 8
 sudo dls-neon-theme restore
@@ -45,15 +36,15 @@ reinstalla EFI o cambia l’ordine del firmware. Le voci restano della distribuz
 
 ## Build e verifica
 
-Dipendenze di build Ubuntu/Debian: python3-pil, python3-tk, grub-common,
+Dipendenze di build Ubuntu/Debian: python3-pil, grub-common,
 grub-efi-amd64-bin, grub2-common, xorriso, mtools, qemu-system-x86, ovmf,
-xvfb, xauth, make. [Ambiente isolato](packaging/Dockerfile.test).
+make. [Ambiente isolato](packaging/Dockerfile.test).
 
 ```sh
 make package
 make limine-package
 make setup-package
-xvfb-run -a python3 -m unittest discover -s tests
+python3 -m unittest discover -s tests
 python3 scripts/preview.py --headless --theme synaptic-cosmos
 python3 scripts/limine_preview.py --theme synaptic-cosmos
 ```
@@ -63,8 +54,8 @@ richiede le anteprime verificate conservate nel repository: se il tema GRUB camb
 rigenerare la prova e aggiornare la sua evidenza prima di confezionarlo.
 Le VM usano supporti usa e getta e non collegano dischi host né rete.
 
-92 test, incluse interazioni del selettore su display isolato, controllano
-transazioni, confronto voci, integrità, piani e conferme. I tre nuovi temi GRUB
+110 test, incluse interazioni della console senza GUI, controllano
+transazioni, conservazione multiboot, integrità, piani e conferme. I tre nuovi temi GRUB
 sono provati con selezione, sottomenu, console e scorrimento. Synaptic Cosmos
 è osservato nella foto del monitor reale, con prova positiva riferita dall’utente
 e nuovo boot ID/kernel Omarchy verificati in sola lettura. Restano da qualificare
