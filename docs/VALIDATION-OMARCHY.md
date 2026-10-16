@@ -4,6 +4,9 @@
 
 - Existing private repository `Sunny-Pirate/dls-neon-grub` was cloned under
   `~/Projects/dls-neon-grub`; development branch `feat/omarchy-limine`.
+  On 2026-10-16 the same repository (GitHub ID `1414565571`) was transferred to
+  [DreamLab-Solutions/dls-neon-grub](https://github.com/DreamLab-Solutions/dls-neon-grub),
+  retaining private visibility, Git history and pull requests.
 - Actual target: Omarchy 4.0.4, UEFI x86-64, root Btrfs on LUKS2, separate FAT
   ESP mounted at `/boot`, SecureBoot variable disabled. Installed Limine 12.8.0.
 - The firmware BootCurrent names Limine. The actual ESP EFI executable matches

@@ -19,7 +19,7 @@
   le etichette lunghe vengono tagliate. Se il firmware usa questa risoluzione,
   selezionare il profilo compatto 720p; il formato 4:3 deforma il wallpaper 16:9.
 - Il primo workflow GitHub ha completato build, test, packaging e preview
-  su Ubuntu 24.04: [run iniziale](https://github.com/Sunny-Pirate/dls-neon-grub/actions/runs/38157482076).
+  su Ubuntu 24.04: [run iniziale](https://github.com/DreamLab-Solutions/dls-neon-grub/actions/runs/38157482076).
 
 La prova iniziale a bassa risoluzione ha evidenziato un errore nella VM:
 la scelta implicita del font iniziale impediva l'attivazione di gfxterm.

@@ -1,5 +1,9 @@
 # DreamLab · Temi di avvio
 
+Repository ufficiale: [DreamLab-Solutions/dls-neon-grub](https://github.com/DreamLab-Solutions/dls-neon-grub),
+mantenuto da DreamLab Solutions. Trasferito dal profilo Sunny-Pirate il 2026-10-16;
+la cronologia e le PR sono conservate.
+
 Versione **0.5.0**: console interattiva con scelta e anteprima dei quattro temi.
 Il multiboot già presente — Windows, macOS, Linux e voci personalizzate — rimane
 intatto. GRUB conserva ogni byte originale e aggiunge solo comandi grafici;
