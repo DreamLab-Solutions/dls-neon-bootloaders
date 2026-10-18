@@ -8,8 +8,8 @@ guide. Check [compatibility](COMPATIBILITY.md) before applying a theme.
 
 Open [Releases](https://github.com/DreamLab-Solutions/dls-neon-bootloaders/releases/tag/v0.5.2)
 and download `dls-neon-setup-0.5.2.tar.gz` and `SHA256SUMS` from **Assets**.
-Do not use the automatic Source code download as an installer. While the
-repository is private, sign in with an account that has repository access.
+Do not use the automatic Source code download as an installer. Release assets
+are available from this public repository without signing in.
 
 From the download directory:
 

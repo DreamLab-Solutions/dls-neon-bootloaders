@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Expand the public README with verified download commands, prerequisites,
+  read-only CLI examples, console controls, restore and troubleshooting guidance.
 - Move the sanitized main history to `DreamLab-Solutions/dls-neon-bootloaders`
   and update current source, installation and release links for both bootloaders.
 - Retain the original v0.5.2 source tag and preview downloads byte-for-byte.

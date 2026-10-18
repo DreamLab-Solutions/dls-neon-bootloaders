@@ -121,8 +121,8 @@ verified transaction backups and conservative restore.
 | `SHA256SUMS` | Checksums for these four packages. |
 
 Use **Assets** below. GitHub's automatic Source code archives are developer
-sources, not the ready-to-run installer. Docker is not required. While the
-repository is private, downloads require repository access.
+sources, not the ready-to-run installer. Docker is not required. Release assets
+are publicly downloadable without repository access or a GitHub account.
 
 ## Install the combined console
 

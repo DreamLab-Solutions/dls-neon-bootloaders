@@ -60,16 +60,17 @@ with the staged release before reporting completion.
 
 ## Preview visibility and public release
 
-The repository is currently **private**. Its releases inherit that access;
-creating a release does not make the repository or downloads public. The user
-requested release packaging and documentation; a visibility change is separate.
+The canonical repository and its releases are **public**. The user approved
+public publication after source, history, package and documentation review on
+2026-10-18. The private predecessor is retained separately; its provider-managed
+PR references were not imported. The current v0.5.2 downloads remain unchanged.
 
 Code/documentation is MIT, runtime artwork is CC BY 4.0 where applicable, DejaVu
 has its own license and DreamLab marks are reserved. Original concept references are privately archived outside Git and excluded from
 the artwork grant. Check every branch/tag, source archive, release package and
 provider-managed PR reference/cache before publication. A rewrite or force-push
-alone does not prove GitHub has expunged old data. Keep visibility private until
-provider-side exposure is resolved. Never silently replace published assets or
+alone does not prove GitHub has expunged old data. Any future visibility change
+needs explicit authorization after reviewing the actual refs and assets. Never silently replace published assets or
 remove license attribution to satisfy a scan. See GitHub's [removal procedure](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository).
 
 Before calling a release hardware-qualified, complete the applicable real boot,

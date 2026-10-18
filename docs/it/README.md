@@ -12,7 +12,9 @@ Synaptic Cosmos. La documentazione principale e le note di rilascio sono
 
 Il pacchetto consigliato è `dls-neon-setup-0.5.2.tar.gz`: console interattiva,
 quattro temi e anteprime. Non richiede Docker né un'interfaccia grafica dedicata.
-La release è una preview; finché il repository resta privato occorre avervi accesso.
+La release è una preview pubblica con i limiti descritti nella compatibilità.
+Gli archivi v0.5.2 conservano la documentazione originale precedente al cambio
+di repository: usa le guide online attuali per i collegamenti aggiornati.
 
 ## Installazione con un agente AI
 
