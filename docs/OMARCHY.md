@@ -9,7 +9,7 @@ install Limine or GRUB. Check the exact supported layout in
 ## Download, inspect and back up
 
 Download the dedicated archive and `SHA256SUMS` from
-[Releases](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.2).
+[Releases](https://github.com/DreamLab-Solutions/dls-neon-bootloaders/releases/tag/v0.5.2).
 In the download directory:
 
 ```sh

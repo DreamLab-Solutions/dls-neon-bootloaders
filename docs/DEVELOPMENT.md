@@ -1,7 +1,7 @@
 # Build and test
 
 End users should download a package from
-[Releases](https://github.com/DreamLab-Solutions/dls-neon-grub/releases).
+[Releases](https://github.com/DreamLab-Solutions/dls-neon-bootloaders/releases).
 Docker images are development environments, not installation prerequisites or
 release assets. Ready-to-run packages do not contain Docker, QEMU, firmware or
 bootloader test binaries.
@@ -13,8 +13,8 @@ Build dependencies:
 ```sh
 sudo apt install python3 python3-pil grub-common grub-efi-amd64-bin grub2-common \
   xorriso mtools qemu-system-x86 ovmf dpkg-dev make
-git clone https://github.com/DreamLab-Solutions/dls-neon-grub.git
-cd dls-neon-grub
+git clone https://github.com/DreamLab-Solutions/dls-neon-bootloaders.git
+cd dls-neon-bootloaders
 make package
 make limine-package
 make setup-package

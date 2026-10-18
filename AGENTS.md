@@ -1,4 +1,4 @@
-# DLS Neon GRUB
+# DLS Neon Bootloaders
 
 Read README.md and docs/DESIGN.md before changes. The original concept is retained privately outside Git. Do not reintroduce
 reference images, private chat links or host reports. Generated runtime artwork

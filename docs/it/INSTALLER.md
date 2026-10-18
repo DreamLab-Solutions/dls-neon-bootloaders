@@ -1,7 +1,7 @@
 # Installazione da Linux
 
 Scarica `dls-neon-setup-0.5.2.tar.gz` e `SHA256SUMS` dagli asset della
-[release](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.2).
+[release](https://github.com/DreamLab-Solutions/dls-neon-bootloaders/releases/tag/v0.5.2).
 Nella cartella dei download:
 
 ```sh

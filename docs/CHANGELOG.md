@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Move the sanitized main history to `DreamLab-Solutions/dls-neon-bootloaders`
+  and update current source, installation and release links for both bootloaders.
+- Retain the original v0.5.2 source tag and preview downloads byte-for-byte.
+  Existing loader-specific package, command and state-directory names stay valid.
+
 ## 0.5.2 — 2026-10-16
 
 - Add agent-installation prompts and a Codex CLI command, with guarded plans,

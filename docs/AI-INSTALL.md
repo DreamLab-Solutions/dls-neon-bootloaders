@@ -7,7 +7,7 @@ that computer merely because a user supplied a local path.
 ## Copyable prompt
 
 ```text
-Install DreamLab Boot Themes from https://github.com/DreamLab-Solutions/dls-neon-grub
+Install DreamLab Boot Themes from https://github.com/DreamLab-Solutions/dls-neon-bootloaders
 using docs/AI-INSTALL.md. Inspect the actual active UEFI bootloader read-only,
 qualify its layout, show the four themes and verify the release checksum. Ask
 which theme I prefer if I have not chosen one. Review the plan and backup/live
@@ -28,7 +28,7 @@ itself with sudo or disable its permission controls.
    and multiboot entries read-only. Keep inventory local. Request administrative
    read access through normal authentication, never a password in chat.
 2. Download the combined archive and `SHA256SUMS` from a compatible published
-   [release](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.2).
+   [release](https://github.com/DreamLab-Solutions/dls-neon-bootloaders/releases/tag/v0.5.2).
    Verify before extraction. Do not use a source archive, pipe a remote script
    through sudo, install another bootloader or downgrade EFI files.
 3. Show the four images in `previews/grub/` or `previews/limine/`. Use an existing

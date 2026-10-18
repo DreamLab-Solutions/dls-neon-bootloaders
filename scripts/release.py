@@ -13,7 +13,7 @@ import tarfile
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
-REPO = 'https://github.com/DreamLab-Solutions/dls-neon-grub'
+REPO = 'https://github.com/DreamLab-Solutions/dls-neon-bootloaders'
 LINK = re.compile(r'!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)')
 
 

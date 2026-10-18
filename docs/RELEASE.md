@@ -4,6 +4,15 @@ Releases are versioned downloads with English notes, four installable packages
 and one checksum file. CI artifacts are temporary build outputs; they are not
 the user-facing distribution channel.
 
+## Repository move
+
+`DreamLab-Solutions/dls-neon-bootloaders` is the canonical source for both GRUB
+and Limine. It starts from the sanitized main history, without importing PR refs
+from the private predecessor. The v0.5.2 tag and its preview assets are retained
+unchanged; their embedded documentation reflects the repository name at build
+time. Current guides on main use the new repository. Build any changed downloads
+under a new version, following the process below.
+
 ## Contents of v0.5.2
 
 | Asset | Purpose |
@@ -40,7 +49,7 @@ For a local reviewed build, the equivalent GitHub CLI command is:
 
 ```sh
 gh release create v0.5.2 dist/release/* \
-  --repo DreamLab-Solutions/dls-neon-grub --target REVIEWED_COMMIT_SHA \
+  --repo DreamLab-Solutions/dls-neon-bootloaders --target REVIEWED_COMMIT_SHA \
   --draft --prerelease --title 'DreamLab Boot Themes v0.5.2 — preview' \
   --notes-file dist/release/RELEASE-NOTES.md
 ```

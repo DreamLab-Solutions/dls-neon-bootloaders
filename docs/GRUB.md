@@ -7,7 +7,7 @@ They do not replace GRUB or add operating-system entries.
 ## Debian / Ubuntu
 
 Download `dls-neon-grub_0.5.2_all.deb` and `SHA256SUMS` from
-[Releases](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.2).
+[Releases](https://github.com/DreamLab-Solutions/dls-neon-bootloaders/releases/tag/v0.5.2).
 Verify the checksum in the download directory, then install:
 
 ```sh

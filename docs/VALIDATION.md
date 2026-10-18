@@ -12,8 +12,8 @@
 - Real GRUB parser checks, filesystem UUID and GRUB-relative asset paths, literal
   appearance-only generator output, backup/config permissions and legacy restore.
 - Debian isolated builds and GitHub Actions for packaging, tests and native
-  bootloader previews. See [Actions](https://github.com/DreamLab-Solutions/dls-neon-grub/actions)
-  and the [first GRUB run](https://github.com/DreamLab-Solutions/dls-neon-grub/actions/runs/38157482076).
+  bootloader previews. See [Actions](https://github.com/DreamLab-Solutions/dls-neon-bootloaders/actions)
+  and the [historical first GRUB run in the predecessor repository](https://github.com/DreamLab-Solutions/dls-neon-grub/actions/runs/38157482076).
 - Limine and physical Omarchy scope is recorded in
   [VALIDATION-OMARCHY.md](VALIDATION-OMARCHY.md).
 

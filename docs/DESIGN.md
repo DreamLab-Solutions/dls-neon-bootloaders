@@ -39,7 +39,7 @@ claimed. DreamLab marks remain reserved.
 ## Project boundaries
 
 The canonical repository is
-[DreamLab-Solutions/dls-neon-grub](https://github.com/DreamLab-Solutions/dls-neon-grub),
+[DreamLab-Solutions/dls-neon-bootloaders](https://github.com/DreamLab-Solutions/dls-neon-bootloaders),
 maintained by DreamLab Solutions. Private design links and local host paths
 are excluded from publication history.
 It is an independent DreamLab product. It does not modify the DreamLab web

@@ -4,7 +4,7 @@ Four space and AI inspired themes for **GRUB** and **Limine**, with an interacti
 terminal installer, image previews, verified backups and conservative restore.
 Teal, purple and acid yellow `#D9FF00` are the DreamLab palette.
 
-[Download v0.5.2 preview](https://github.com/DreamLab-Solutions/dls-neon-grub/releases/tag/v0.5.2)
+[Download v0.5.2 preview](https://github.com/DreamLab-Solutions/dls-neon-bootloaders/releases/tag/v0.5.2)
 · [Installation](docs/INSTALLER.md) · [Theme gallery](docs/THEMES.md)
 · [Compatibility](docs/COMPATIBILITY.md) · [Changelog](docs/CHANGELOG.md)
 · [Italiano](docs/it/README.md)
@@ -51,7 +51,7 @@ The installer does not reboot; check the next real boot yourself.
 Give this prompt to an agent with terminal access **on the computer to theme**:
 
 ```text
-Help me install DreamLab Boot Themes from https://github.com/DreamLab-Solutions/dls-neon-grub.
+Help me install DreamLab Boot Themes from https://github.com/DreamLab-Solutions/dls-neon-bootloaders.
 Read docs/AI-INSTALL.md. Inspect my active bootloader read-only, show the four
 themes, download the matching release and verify its checksum. Review the exact
 host plan and recovery readiness with me, then apply only after my explicit
@@ -62,7 +62,7 @@ inventory/backups, bypass guards or reboot automatically.
 With Codex CLI already installed and signed in:
 
 ```sh
-codex 'Help me install DreamLab Boot Themes from https://github.com/DreamLab-Solutions/dls-neon-grub. Read docs/AI-INSTALL.md, inspect first, show previews and the exact plan, and obtain my explicit approval before boot-file writes. Preserve all OS entries and never reboot automatically.'
+codex 'Help me install DreamLab Boot Themes from https://github.com/DreamLab-Solutions/dls-neon-bootloaders. Read docs/AI-INSTALL.md, inspect first, show previews and the exact plan, and obtain my explicit approval before boot-file writes. Preserve all OS entries and never reboot automatically.'
 ```
 
 The agent handles downloads, verification, inspection and approved installation.

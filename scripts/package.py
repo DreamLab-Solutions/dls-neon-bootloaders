@@ -60,7 +60,7 @@ Priority: optional
 Architecture: all
 Maintainer: DreamLab Solutions <info@dreamlab.solutions>
 Depends: python3, grub-common, grub2-common
-Homepage: https://github.com/DreamLab-Solutions/dls-neon-grub
+Homepage: https://github.com/DreamLab-Solutions/dls-neon-bootloaders
 Description: DreamLab space and AI theme collection for GNU GRUB (preview)
  Native GRUB theme with teal, purple and acid yellow accents.
  Installing the package only stages files; activate explicitly using
