@@ -8,6 +8,7 @@ from pathlib import Path
 import shutil
 import socket
 import subprocess
+import tempfile
 import time
 
 from PIL import Image
@@ -149,8 +150,9 @@ def main():
     if firmware is None:
         raise SystemExit("Install ovmf / ovmf-generic, or set OVMF_CODE to its firmware path")
     qemu = os.environ.get("QEMU", "qemu-system-x86_64")
-    qmp = dest / "qmp.sock"
-    qmp.unlink(missing_ok=True)
+    # Unix sockets have a short path limit, independent of the checkout location.
+    qmp_directory = tempfile.TemporaryDirectory(prefix="dls-qmp-", dir="/tmp")
+    qmp = Path(qmp_directory.name) / "qmp.sock"
     command = [qemu, "-machine", "q35", "-accel", "tcg", "-m", "256", "-vga", "none",
                "-device", "VGA,vgamem_mb=64", "-serial", f"file:{dest / 'serial.log'}",
                "-cdrom", str(iso), "-boot", "d", "-nic", "none",
@@ -173,7 +175,10 @@ def main():
         command.extend(["-display", "gtk", "-name", "DLS Neon — GRUB preview"])
     print("Diskless UEFI preview; no host drives, network, or persistent firmware variables.", flush=True)
     if not args.headless:
-        subprocess.run(command, check=True)
+        try:
+            subprocess.run(command, check=True)
+        finally:
+            qmp_directory.cleanup()
         return
     with (dest / "qemu.log").open("w") as log:
         proc = subprocess.Popen(command, stdout=log, stderr=log)
@@ -210,6 +215,7 @@ def main():
             if proc.poll() is None:
                 proc.terminate()
                 proc.wait(timeout=10)
+            qmp_directory.cleanup()
     evidence = {'theme': args.theme, 'profile': args.profile,
                 'theme_manifest_sha256': hashlib.sha256((ROOT/'build/grub-themes'/args.theme/'manifest.json').read_bytes()).hexdigest(),
                 'resolution': args.resolution or RESOLUTIONS[args.profile],

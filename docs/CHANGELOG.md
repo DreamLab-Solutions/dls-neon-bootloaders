@@ -6,6 +6,8 @@
   and update current source, installation and release links for both bootloaders.
 - Retain the original v0.5.2 source tag and preview downloads byte-for-byte.
   Existing loader-specific package, command and state-directory names stay valid.
+- Keep VM control sockets in a short temporary path so GRUB and Limine previews
+  work from longer repository names and nested checkout directories.
 
 ## 0.5.2 — 2026-10-16
 

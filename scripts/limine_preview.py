@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import tempfile
 import time
 
 from PIL import Image
@@ -113,8 +114,9 @@ interface_resolution: {args.resolution}
     firmware = find_firmware()
     if firmware is None:
         raise RuntimeError('OVMF firmware missing')
-    qmp = dest / 'qmp.sock'
-    qmp.unlink(missing_ok=True)
+    # Keep the Unix socket below its path limit even in deeply nested checkouts.
+    qmp_directory = tempfile.TemporaryDirectory(prefix='dls-qmp-', dir='/tmp')
+    qmp = Path(qmp_directory.name) / 'qmp.sock'
     variables = dest / 'OVMF_VARS.fd'
     shutil.copy2(firmware.with_name(firmware.name.replace('CODE', 'VARS')), variables)
     command = ['qemu-system-x86_64', '-machine', 'q35', '-accel', 'tcg', '-m', '256',
@@ -160,6 +162,7 @@ interface_resolution: {args.resolution}
             if monitor: monitor.close()
             if proc.poll() is None:
                 proc.terminate(); proc.wait(timeout=10)
+            qmp_directory.cleanup()
     evidence = {'theme': args.theme or 'event-horizon', 'resolution': args.resolution, 'limine_binary_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(),
                 'qemu': subprocess.check_output(['qemu-system-x86_64', '--version'], text=True).splitlines()[0],
                 'scope': 'real bootloader graphics, directory selection and submenu expansion; demo boot paths; no OS kernel or hardware boot tested',
