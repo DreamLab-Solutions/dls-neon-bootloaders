@@ -11,7 +11,7 @@
   and scrolling at 1080p. The 0.5 preview also checks a mode switch from 1024×768.
 - Real GRUB parser checks, filesystem UUID and GRUB-relative asset paths, literal
   appearance-only generator output, backup/config permissions and legacy restore.
-- Debian isolated builds and GitHub Actions for packaging, tests and native
+- Historical Debian isolated builds and GitHub Actions for packaging, tests and native
   bootloader previews. See [Actions](https://github.com/DreamLab-Solutions/dls-neon-bootloaders/actions)
   and the [historical first GRUB run in the predecessor repository](https://github.com/DreamLab-Solutions/dls-neon-grub/actions/runs/38157482076).
 - Limine and physical Omarchy scope is recorded in

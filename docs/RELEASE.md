@@ -1,8 +1,7 @@
 # Release process
 
 Releases are versioned downloads with English notes, four installable packages
-and one checksum file. CI artifacts are temporary build outputs; they are not
-the user-facing distribution channel.
+and one checksum file. Packaging and verification run in a local checkout.
 
 ## Repository move
 
@@ -35,26 +34,31 @@ and must not be presented as the ready-to-run installer.
 1. Update `VERSION`, the current download filenames in English/Italian guides,
    and `docs/CHANGELOG.md`. Keep installer behavior and qualified hardware scope
    explicit; documentation changes do not establish a new physical boot result.
-2. Run the tests and native preview workflows on the exact release source.
-   Build the four packages, then run `python3 scripts/release.py` to verify and
-   stage the complete set. Check the extracted console and offline docs.
-3. Run the **Prepare release** workflow manually from the reviewed main commit.
-   It builds and validates packages and creates a **draft prerelease** bound to
-   that commit. It refuses an existing release/tag rather than replacing assets.
+2. Run `bash scripts/validate-local.sh` from a clean checkout of the reviewed
+   main commit. The command runs the tests and native previews, builds the four
+   packages, and stages the verified set under `dist/release/`.
+   Check the extracted console and offline docs.
+3. After approval, create a **draft prerelease** from that checkout using the
+   commands below. Use a version with no existing release or tag.
 4. Review the draft's assets, checksums, English notes and target SHA. Publish it
    as a preview after approval. Never replace a published asset silently; use a
    new version for a changed package. A preview is not a universal support claim.
 
-For a local reviewed build, the equivalent GitHub CLI command is:
+Use the local GitHub CLI for the approved draft:
 
 ```sh
-gh release create v0.5.2 dist/release/* \
-  --repo DreamLab-Solutions/dls-neon-bootloaders --target REVIEWED_COMMIT_SHA \
-  --draft --prerelease --title 'DreamLab Boot Themes v0.5.2 — preview' \
-  --notes-file dist/release/RELEASE-NOTES.md
+repo=DreamLab-Solutions/dls-neon-bootloaders
+tag="v$(cat VERSION)"
+commit="$(git rev-parse HEAD)"
+remote_tag="$(git ls-remote --refs "https://github.com/$repo.git" "refs/tags/$tag")" &&
+  test -z "$remote_tag" &&
+  gh release create "$tag" dist/release/* \
+    --repo "$repo" --target "$commit" \
+    --draft --prerelease --title "DreamLab Boot Themes $tag — preview" \
+    --notes-file dist/release/RELEASE-NOTES.md
 ```
 
-Publish a reviewed draft with `gh release edit v0.5.2 --draft=false`.
+Publish a reviewed draft with `gh release edit "$tag" --repo "$repo" --draft=false`.
 Read the release back, download every attached asset and compare its checksum
 with the staged release before reporting completion.
 
