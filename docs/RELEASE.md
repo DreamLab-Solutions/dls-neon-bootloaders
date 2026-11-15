@@ -72,7 +72,8 @@ packages, their checksums, the release notes and source metadata.
 python3 scripts/nexus_release.py
 ```
 
-Keep the prepared `dist/nexus/<sha256>.tgz` to retry with the same bytes.
+Use the unchanged `dist/nexus/<sha256>.tgz` from preparation and keep it for
+retries.
 Use the existing scoped Sunnyday Nexus publisher credential in the private
 `dreamlab/artifacts/nexus.json` file under your XDG configuration directory.
 `DREAMLAB_NEXUS_CONFIG` selects an existing credential file, and a process
