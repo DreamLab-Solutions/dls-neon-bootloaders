@@ -62,6 +62,33 @@ Publish a reviewed draft with `gh release edit "$tag" --repo "$repo" --draft=fal
 Read the release back, download every attached asset and compare its checksum
 with the staged release before reporting completion.
 
+## Publish an authenticated Nexus bundle
+
+From the clean checkout of the reviewed `vMAJOR.MINOR.PATCH` tag, prepare the
+bundle locally. This runs the complete local validation and stages the four
+packages, their checksums, the release notes and source metadata.
+
+```sh
+python3 scripts/nexus_release.py
+```
+
+Keep the prepared `dist/nexus/<sha256>.tgz` to retry with the same bytes.
+Use the existing scoped Sunnyday Nexus publisher credential in the private
+`dreamlab/artifacts/nexus.json` file under your XDG configuration directory.
+`DREAMLAB_NEXUS_CONFIG` selects an existing credential file, and a process
+`DREAMLAB_NEXUS_AUTH` takes precedence.
+
+Replace `PREPARED_SHA256` with the digest printed by the preparation command.
+
+```sh
+python3 scripts/nexus_release.py --publish dist/nexus/PREPARED_SHA256.tgz
+```
+
+Share the resulting digest URL and SHA-256 with recipients who have approved
+Nexus read access. Before unpacking, readers verify the bundle digest, then
+run `sha256sum --check SHA256SUMS` against the extracted packages. Public
+downloads remain available through the repository's existing release page.
+
 ## Preview visibility and public release
 
 The canonical repository and its releases are **public**. The user approved
