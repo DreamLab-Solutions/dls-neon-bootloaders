@@ -12,7 +12,7 @@ Build dependencies:
 
 ```sh
 sudo apt install python3 python3-pil grub-common grub-efi-amd64-bin grub2-common \
-  xorriso mtools qemu-system-x86 ovmf dpkg-dev make
+  xorriso mtools qemu-system-x86 ovmf dpkg-dev make curl ca-certificates git
 git clone https://github.com/DreamLab-Solutions/dls-neon-bootloaders.git
 cd dls-neon-bootloaders
 make package
@@ -25,6 +25,13 @@ The first three targets produce GRUB portable/deb, Limine and combined packages
 under `dist/`. The final command stages the four current-version packages,
 `SHA256SUMS` and English release notes under `dist/release/` after integrity and
 documentation checks. Never mix different versions in one release.
+
+Run `bash scripts/validate-local.sh` on Linux x86-64 with these dependencies
+and a full Git checkout. The script downloads Gitleaks and the Limine test
+binary from their upstream releases and verifies their pinned SHA-256 checksums
+before use. The native previews use disposable QEMU media. Build outputs stay
+in the checkout, with packages and checksums in `dist/` and screenshots and
+JSON evidence under `build/`.
 
 ## Optional isolated development container
 
@@ -48,7 +55,7 @@ python3 scripts/limine_preview.py --theme synaptic-cosmos --limine-dir /path/to/
 ```
 
 The GRUB tool uses its own disposable ISO/FAT media and OVMF. Obtain the pinned
-Limine test archive using the URL/hash in `.github/workflows/limine.yml`; the
+Limine test archive using the URL and checksum in `scripts/validate-local.sh`. The
 Limine preview uses disposable FAT media too. Never attach a host disk. A menu
 capture is not an OS boot test. View and compare selection, submenus, console,
 scrolling and the expected resolution before updating evidence.
